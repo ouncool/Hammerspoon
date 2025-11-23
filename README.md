@@ -1,0 +1,113 @@
+# Hammerspoon 配置
+
+个人精简的 Hammerspoon 配置，采用模块化设计，只保留实用功能。
+
+## 目录结构
+
+```
+~/.hammerspoon/
+├── init.lua                          # 主入口文件
+├── modules/                          # 所有功能模块
+│   ├── input-method/                 # 输入法相关
+│   │   ├── auto-switch.lua          # 自动切换输入法
+│   │   └── indicator.lua            # 输入法状态指示器
+│   ├── window/                       # 窗口管理
+│   │   ├── manager.lua              # Vim风格窗口管理器
+│   │   └── launcher.lua             # 环形应用启动器
+│   ├── keyboard/                     # 键盘增强
+│   │   └── paste-helper.lua         # 粘贴助手
+│   ├── work/                         # 工作相关
+│   │   ├── wifi-mute.lua            # WiFi自动静音
+│   │   └── reminder.lua             # 工作时间提醒
+│   ├── integration/                  # 应用集成
+│   │   └── finder-terminal.lua      # Finder与终端/编辑器集成
+│   └── utils/                        # 工具库
+│       ├── functions.lua            # 工具函数
+│       └── animation.lua            # 动画函数
+└── Spoons/                           # Hammerspoon Spoons
+```
+
+## 功能列表
+
+### 输入法管理
+- **自动切换**: 默认使用搜狗拼音，指定应用（终端、编辑器、浏览器）自动切换为英文
+- **状态指示**: 屏幕顶部显示红色横条表示中文输入法
+
+### 窗口管理
+- **Vim风格管理器** (`Alt + R`):
+  - `h/l/j/k`: 左/右/下/上半屏
+  - `y/u/i/o`: 四个角的四分之一屏
+  - `f`: 最大化
+  - `c`: 关闭窗口
+  - `tab`: 显示帮助
+  - `q/Esc`: 退出管理模式
+- **环形启动器** (`Cmd + \``): 按住显示环形菜单，鼠标选择应用，松开启动
+
+### 键盘增强
+- **粘贴助手** (`Cmd + Shift + V`): 绕过网站粘贴限制
+
+### 工作助手
+- **WiFi自动静音**: 连接到公司WiFi时自动静音
+- **时间提醒**: 11:30和17:30定时提醒
+
+### 应用集成
+- **Finder → 终端** (`Cmd + Alt + T`): 在 Ghostty 终端中打开当前 Finder 目录
+- **Finder → VS Code** (`Cmd + Alt + V`): 在 VS Code 中打开当前 Finder 目录
+
+## 使用说明
+
+### 安装
+1. 安装 Hammerspoon: `brew install hammerspoon`
+2. 将此配置放到 `~/.hammerspoon/`
+3. 重载配置: `Cmd + Alt + Ctrl + R`
+
+### 自定义输入法应用列表
+编辑 `modules/input-method/auto-switch.lua`，修改 `ENGLISH_APPS` 列表：
+
+```lua
+local ENGLISH_APPS = {
+  '/Applications/Terminal.app',
+  '/Applications/Ghostty.app',
+  '/Applications/Visual Studio Code.app',
+  -- 添加更多应用...
+}
+```
+
+### 自定义环形启动器应用
+编辑 `modules/window/launcher.lua`，修改 `APPLICATIONS` 列表：
+
+```lua
+local APPLICATIONS = {
+  { name = 'WeChat', icon = '/Applications/WeChat.app/Contents/Resources/AppIcon.icns' },
+  { name = 'Google Chrome', icon = '/Applications/Google Chrome.app/Contents/Resources/app.icns' },
+  -- 添加更多应用...
+}
+```
+
+### 修改快捷键
+所有快捷键都在各自的模块文件中定义，可以根据需要修改。
+
+## 快捷键参考
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Cmd+Alt+Ctrl+R` | 重载配置 |
+| `Alt+R` | 窗口管理模式 |
+| `Cmd+\`` | 环形启动器 |
+| `Cmd+Alt+T` | 在终端打开Finder目录 |
+| `Cmd+Alt+V` | 在VS Code打开Finder目录 |
+| `Cmd+Shift+V` | 强制粘贴 |
+
+## 自动功能
+- WiFi自动静音（连接到MUDU）
+- 工作时间提醒（11:30/17:30）
+- 输入法自动切换
+
+## 注意事项
+1. 输入法ID需要根据实际安装的输入法修改
+2. WiFi名称需要在 `modules/work/wifi-mute.lua` 中修改
+3. 工作提醒时间可在 `modules/work/reminder.lua` 中自定义
+
+## 参考资料
+- [Hammerspoon 官方文档](https://www.hammerspoon.org/docs/)
+- [Hammerspoon API](https://www.hammerspoon.org/docs/index.html)
