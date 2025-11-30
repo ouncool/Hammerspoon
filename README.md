@@ -102,6 +102,8 @@ local APPLICATIONS = {
 - WiFi自动静音（连接到MUDU）
 - 工作时间提醒（11:30/17:30）
 - 输入法自动切换
+ - 预览 (Preview) 自动全屏：当在 Preview 中打开 PDF 文件时，模块 `modules/integration/preview-pdf-fullscreen.lua` 会尝试将窗口切换到全屏模式（已验证）。
+   - 如果需要手工重载配置或调试，请使用 `hs.reload()` 或菜单热键 `Cmd+Alt+Ctrl+R`。
 
 ## 注意事项
 1. 输入法ID需要根据实际安装的输入法修改
@@ -111,3 +113,33 @@ local APPLICATIONS = {
 ## 参考资料
 - [Hammerspoon 官方文档](https://www.hammerspoon.org/docs/)
 - [Hammerspoon API](https://www.hammerspoon.org/docs/index.html)
+
+## 归档与备份
+- 旧脚本与备份文件已移动到 `legacy/` 目录，例如 `legacy/1.lua`、`legacy/inputswith2.lua`，主目录仅保留模块化实现。
+
+## 本地配置示例（`.env`）
+
+为了避免将公司或个人的敏感配置（例如 Wi‑Fi 名称、输入法 ID 等）提交到仓库，项目支持在本地放置一个不被提交的 `.env` 文件（位置：`~/.hammerspoon/.env`）。以下是 `example.env` 中的示例内容，复制并根据需要修改为你的本地值：
+
+```
+# Example env file for ~/.hammerspoon
+#
+# This file is intended as a harmless example to show how to configure
+# local, sensitive values such as company Wi‑Fi SSIDs. Do NOT put real
+# secrets here if you plan to commit this file; instead copy this to
+# `.env` and edit the real values locally. The real `.env` file is
+# ignored by `.gitignore`.
+#
+# Options:
+# - WORK_SSIDS: comma-separated list of SSIDs
+# - WORK_SSID1 / WORK_SSID2 ... : alternate individual entries
+
+# Example using a comma-separated list:
+WORK_SSIDS=COMPANY_WIFI,COMPANY_WIFI_5G
+
+# Or using individual variables:
+#WORK_SSID1=COMPANY_WIFI
+#WORK_SSID2=COMPANY_WIFI_5G
+```
+
+模块 `modules/work/wifi-mute.lua` 会优先读取 `~/.hammerspoon/.env` 中的 `WORK_SSIDS` 或 `WORK_SSID*`，若不存在则使用文件中内置的默认值。

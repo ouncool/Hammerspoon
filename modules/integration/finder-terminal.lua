@@ -80,10 +80,10 @@ end
 
 -- 绑定快捷键
 hs.hotkey.bind({'cmd', 'alt'}, 'T', M.openInTerminal)
-hs.hotkey.bind({'cmd', 'alt'}, 'V', M.openInVSCode)
+hs.hotkey.bind({'cmd', 'alt'}, 'B', M.openInVSCode)
 
 print("Finder Integration loaded:")
 print("  - Cmd+Alt+T: Open in Ghostty")
-print("  - Cmd+Alt+V: Open in VS Code")
+print("  - Cmd+Alt+B: Open in VS Code")
 
 return M

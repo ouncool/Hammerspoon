@@ -23,8 +23,8 @@ local ENGLISH_APPS = {
   '/Applications/iTerm.app',
   '/Applications/Visual Studio Code.app',
   '/Applications/WebStorm.app',
-  '/Applications/Google Chrome.app',
-  '/Applications/Brave Browser.app',
+--   '/Applications/Google Chrome.app',
+--  '/Applications/Brave Browser.app',
 }
 
 -- --------------------------------------------------

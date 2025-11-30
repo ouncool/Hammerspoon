@@ -28,3 +28,6 @@ Temporary Items
 # Hammerspoon specific
 Spoons/
 !Spoons/.gitkeep
+
+# Local env file for secrets (do not commit)
+.env
