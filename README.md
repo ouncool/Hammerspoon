@@ -37,6 +37,7 @@
 - **Vim风格管理器** (`Alt + R`):
   - `h/l/j/k`: 左/右/下/上半屏
   - `y/u/i/o`: 四个角的四分之一屏
+  - `H/L`: 左/右 三分之二 屏（大写 H / L）
   - `f`: 最大化
   - `c`: 关闭窗口
   - `tab`: 显示帮助
@@ -86,6 +87,24 @@ local APPLICATIONS = {
 
 ### 修改快捷键
 所有快捷键都在各自的模块文件中定义，可以根据需要修改。
+
+### 图片压缩模块（剪切板）
+项目新增了一个图片压缩模块，用于将剪切板中的图片压缩并复制回剪切板，常用于快速粘贴体积较小的截图或图片。
+
+- 触发方式：进入窗口管理模式（`Alt + R`），在模式下快速按两次 `i`（即 `ii`）会执行压缩并复制回剪切板。
+- 默认行为：先将图片按比例缩放到最大边长 `1600` 像素（可配置），然后以 JPEG 格式导出，默认质量 `60`（可配置）。
+- 配置项：可在 `modules/utils/config.lua` 中修改默认值：
+  - `image.quality`：JPEG 压缩质量（0-100），默认 `60`。
+  - `image.maxDim`：最大边长（像素），默认 `1600`。
+
+示例：编辑 `modules/utils/config.lua`，例如把质量设为 50：
+
+```lua
+config = require('modules.utils.config')
+config.image.quality = 50
+```
+
+（或者直接在 `image-compressor` 的调用处传入参数：`compressImageFromPasteboard(quality, maxDim)`）
 
 ## 快捷键参考
 

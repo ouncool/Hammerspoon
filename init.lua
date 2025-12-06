@@ -52,7 +52,7 @@ loadModule('modules.keyboard.paste-helper')       -- Cmd+Shift+V绕过粘贴限�
 -- --------------------------------------------------
 -- 工作相关
 -- --------------------------------------------------
-loadModule('modules.work.wifi-mute')              -- 连接公司WiFi自动静音
+-- loadModule('modules.work.wifi-mute')              -- 连接公司WiFi自动静音
 -- loadModule('modules.work.reminder')               -- 工作时间提醒
 
 -- --------------------------------------------------

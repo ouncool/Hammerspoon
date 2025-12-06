@@ -6,11 +6,19 @@
 --   y / u / i / o : 左上/左下/右上/右下 四分之一
 --   f : 最大化
 --   c : 关闭窗口
+--   ii : 压缩剪切板中的图片
 --   tab : 显示帮助
 --   q / esc : 退出管理模式
 -- **************************************************
 
 local modal = hs.hotkey.modal.new({'alt'}, 'r')
+local imageCompressor = require('modules.utils.image-compressor')
+local config = nil
+pcall(function() config = require('modules.utils.config') end)
+
+-- 追踪连续的 i 键
+local lastKeyTime = 0
+local isWaitingForSecondI = false
 
 local function safeFocusWindow()
   local win = hs.window.frontmostWindow()
@@ -82,6 +90,23 @@ local function quarterRB()
   setFrame(win, { x = screen.x + screen.w / 2, y = screen.y + screen.h / 2, w = screen.w / 2, h = screen.h / 2 })
 end
 
+-- 左右 2/3 屏（用于更宽的半屏布局）
+local function twoThirdLeft()
+  local win = safeFocusWindow()
+  if not win then return end
+  local screen = win:screen():frame()
+  local ratio = (config and config.window and config.window.twoThirdRatio) or (2/3)
+  setFrame(win, { x = screen.x, y = screen.y, w = screen.w * ratio, h = screen.h })
+end
+
+local function twoThirdRight()
+  local win = safeFocusWindow()
+  if not win then return end
+  local screen = win:screen():frame()
+  local ratio = (config and config.window and config.window.twoThirdRatio) or (2/3)
+  setFrame(win, { x = screen.x + screen.w * (1 - ratio), y = screen.y, w = screen.w * ratio, h = screen.h })
+end
+
 local helpMessage = [[
 窗口管理（按 q 或 Esc 退出）
 
@@ -89,9 +114,12 @@ h: 左半屏    l: 右半屏
 j: 下半屏    k: 上半屏
 y: 左上四分  u: 左下四分
 i: 右上四分  o: 右下四分
+H: 左三分之二  L: 右三分之二
 f: 最大化    c: 关闭窗口
+ii: 压缩剪切板图片
 tab: 显示帮助
 ]]
+
 
 local helpTimer = nil
 
@@ -118,7 +146,32 @@ modal:bind('', 'k', halfTop)
 
 modal:bind('', 'y', quarterLT)
 modal:bind('', 'u', quarterLB)
-modal:bind('', 'i', quarterRT)
+-- 左右 2/3 绑定（使用大写 H / L）
+modal:bind('', 'H', twoThirdLeft)
+modal:bind('', 'L', twoThirdRight)
+
+-- i 键：检测 ii 命令（压缩图片）或单独的 i 键（右上四分）
+modal:bind('', 'i', function()
+  local currentTime = hs.timer.secondsSinceEpoch()
+  
+  if isWaitingForSecondI and (currentTime - lastKeyTime) < 0.5 then
+    -- 这是第二个 i，执行压缩图片命令
+    isWaitingForSecondI = false
+    imageCompressor.compressImageFromPasteboard(75)
+  else
+    -- 这是第一个 i 或时间超过了，执行右上四分窗口大小调整
+    isWaitingForSecondI = true
+    lastKeyTime = currentTime
+    -- 设置超时：如果 0.5 秒内没有收到第二个 i，则执行右上四分
+    hs.timer.doAfter(0.5, function()
+      if isWaitingForSecondI then
+        isWaitingForSecondI = false
+        quarterRT()
+      end
+    end)
+  end
+end)
+
 modal:bind('', 'o', quarterRB)
 
 modal:bind('', 'f', function()
