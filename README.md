@@ -12,13 +12,9 @@
 │   │   ├── auto-switch.lua          # 自动切换输入法
 │   │   └── indicator.lua            # 输入法状态指示器
 │   ├── window/                       # 窗口管理
-│   │   ├── manager.lua              # Vim风格窗口管理器
-│   │   └── launcher.lua             # 环形应用启动器
+│   │   └── manager.lua              # Vim风格窗口管理器
 │   ├── keyboard/                     # 键盘增强
 │   │   └── paste-helper.lua         # 粘贴助手
-│   ├── work/                         # 工作相关
-│   │   ├── wifi-mute.lua            # WiFi自动静音
-│   │   └── reminder.lua             # 工作时间提醒
 │   ├── integration/                  # 应用集成
 │   │   └── finder-terminal.lua      # Finder与终端/编辑器集成
 │   └── utils/                        # 工具库
@@ -42,14 +38,12 @@
   - `c`: 关闭窗口
   - `tab`: 显示帮助
   - `q/Esc`: 退出管理模式
-- **环形启动器** (`Cmd + \``): 按住显示环形菜单，鼠标选择应用，松开启动
 
 ### 键盘增强
 - **粘贴助手** (`Cmd + Shift + V`): 绕过网站粘贴限制
 
 ### 工作助手
-- **WiFi自动静音**: 连接到公司WiFi时自动静音
-- **时间提醒**: 11:30和17:30定时提醒
+- （暂无功能模块）
 
 ### 应用集成
 - **Finder → 终端** (`Cmd + Alt + T`): 在 Ghostty 终端中打开当前 Finder 目录
@@ -74,19 +68,8 @@ local ENGLISH_APPS = {
 }
 ```
 
-### 自定义环形启动器应用
-编辑 `modules/window/launcher.lua`，修改 `APPLICATIONS` 列表：
-
-```lua
-local APPLICATIONS = {
-  { name = 'WeChat', icon = '/Applications/WeChat.app/Contents/Resources/AppIcon.icns' },
-  { name = 'Google Chrome', icon = '/Applications/Google Chrome.app/Contents/Resources/app.icns' },
-  -- 添加更多应用...
-}
-```
-
-### 修改快捷键
-所有快捷键都在各自的模块文件中定义，可以根据需要修改。
+### 自定义窗口管理器
+编辑 `modules/window/manager.lua`，修改快捷键或布局。
 
 ### 图片压缩模块（剪切板）
 项目新增了一个图片压缩模块，用于将剪切板中的图片压缩并复制回剪切板，常用于快速粘贴体积较小的截图或图片。
@@ -112,22 +95,17 @@ config.image.quality = 50
 |--------|------|
 | `Cmd+Alt+Ctrl+R` | 重载配置 |
 | `Alt+R` | 窗口管理模式 |
-| `Cmd+\`` | 环形启动器 |
 | `Cmd+Alt+T` | 在终端打开Finder目录 |
 | `Cmd+Alt+V` | 在VS Code打开Finder目录 |
 | `Cmd+Shift+V` | 强制粘贴 |
 
 ## 自动功能
-- WiFi自动静音（连接到MUDU）
-- 工作时间提醒（11:30/17:30）
 - 输入法自动切换
- - 预览 (Preview) 自动全屏：当在 Preview 中打开 PDF 文件时，模块 `modules/integration/preview-pdf-fullscreen.lua` 会尝试将窗口切换到全屏模式（已验证）。
+- 预览 (Preview) 自动全屏：当在 Preview 中打开 PDF 文件时，模块 `modules/integration/preview-pdf-fullscreen.lua` 会尝试将窗口切换到全屏模式（已验证）。
    - 如果需要手工重载配置或调试，请使用 `hs.reload()` 或菜单热键 `Cmd+Alt+Ctrl+R`。
 
 ## 注意事项
 1. 输入法ID需要根据实际安装的输入法修改
-2. WiFi名称需要在 `modules/work/wifi-mute.lua` 中修改
-3. 工作提醒时间可在 `modules/work/reminder.lua` 中自定义
 
 ## 参考资料
 - [Hammerspoon 官方文档](https://www.hammerspoon.org/docs/)

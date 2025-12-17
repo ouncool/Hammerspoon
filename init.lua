@@ -42,18 +42,11 @@ loadModule('modules.input-method.auto-switch')    -- 自动切换输入法（默
 -- 窗口管理
 -- --------------------------------------------------
 loadModule('modules.window.manager')              -- Vim风格窗口管理器 (Alt+R)
--- loadModule('modules.window.launcher')             -- 环形应用启动器 (Cmd+`)
 
 -- --------------------------------------------------
 -- 键盘增强
 -- --------------------------------------------------
 loadModule('modules.keyboard.paste-helper')       -- Cmd+Shift+V绕过粘贴限制
-
--- --------------------------------------------------
--- 工作相关
--- --------------------------------------------------
--- loadModule('modules.work.wifi-mute')              -- 连接公司WiFi自动静音
--- loadModule('modules.work.reminder')               -- 工作时间提醒
 
 -- --------------------------------------------------
 -- 应用集成
