@@ -10,160 +10,68 @@
 --   q / esc : 退出管理模式
 -- **************************************************
 
-local modal = hs.hotkey.modal.new({'alt'}, 'r')
-local config = nil
-pcall(function() config = require('modules.utils.config') end)
+local vimOps = require('modules.window.vim-operations')
 
-local function safeFocusWindow()
-  local win = hs.window.frontmostWindow()
-  if not win then
-    hs.alert.show('没有焦点窗口')
-    return nil
-  end
-  return win
-end
+-- 创建窗口管理模式
+local windowModal = hs.hotkey.modal.new({'alt'}, 'r')
 
-local function setFrame(win, rect)
-  if not win then return end
-  win:setFrame(rect)
-end
-
-local function halfLeft()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x, y = screen.y, w = screen.w / 2, h = screen.h })
-end
-
-local function halfRight()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x + screen.w / 2, y = screen.y, w = screen.w / 2, h = screen.h })
-end
-
-local function halfTop()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x, y = screen.y, w = screen.w, h = screen.h / 2 })
-end
-
-local function halfBottom()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x, y = screen.y + screen.h / 2, w = screen.w, h = screen.h / 2 })
-end
-
-local function quarterLT()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x, y = screen.y, w = screen.w / 2, h = screen.h / 2 })
-end
-
-local function quarterLB()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x, y = screen.y + screen.h / 2, w = screen.w / 2, h = screen.h / 2 })
-end
-
-local function quarterRT()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x + screen.w / 2, y = screen.y, w = screen.w / 2, h = screen.h / 2 })
-end
-
-local function quarterRB()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  setFrame(win, { x = screen.x + screen.w / 2, y = screen.y + screen.h / 2, w = screen.w / 2, h = screen.h / 2 })
-end
-
--- 左右 2/3 屏（用于更宽的半屏布局）
-local function twoThirdLeft()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  local ratio = (config and config.window and config.window.twoThirdRatio) or (2/3)
-  setFrame(win, { x = screen.x, y = screen.y, w = screen.w * ratio, h = screen.h })
-end
-
-local function twoThirdRight()
-  local win = safeFocusWindow()
-  if not win then return end
-  local screen = win:screen():frame()
-  local ratio = (config and config.window and config.window.twoThirdRatio) or (2/3)
-  setFrame(win, { x = screen.x + screen.w * (1 - ratio), y = screen.y, w = screen.w * ratio, h = screen.h })
-end
-
-local helpMessage = [[
-窗口管理（按 q 或 Esc 退出）
-
-h: 左半屏    l: 右半屏
-j: 下半屏    k: 上半屏
-y: 左上四分  u: 左下四分
-i: 右上四分  o: 右下四分
-H: 左三分之二  L: 右三分之二
-f: 最大化    c: 关闭窗口
-tab: 显示帮助
-]]
-
-
+-- 帮助显示定时器
 local helpTimer = nil
 
+-- 显示帮助信息
 local function showHelp()
   if helpTimer then helpTimer:stop() helpTimer = nil end
-  hs.alert.show(helpMessage, 5)
-  -- 也可以使用更复杂的 canvas 来显示帮助
+  hs.alert.show(vimOps.helpMessage, 5)
 end
 
 -- 进入模式时提示
-function modal:entered()
+function windowModal:entered()
   hs.alert.show('窗口管理模式', 1)
 end
 
-function modal:exited()
+function windowModal:exited()
   hs.alert.show('退出窗口管理', 1)
 end
 
--- 绑定按键
-modal:bind('', 'h', halfLeft)
-modal:bind('', 'l', halfRight)
-modal:bind('', 'j', halfBottom)
-modal:bind('', 'k', halfTop)
+-- 绑定窗口操作按键
+windowModal:bind('', 'h', vimOps.operations.halfLeft)
+windowModal:bind('', 'l', vimOps.operations.halfRight)
+windowModal:bind('', 'j', vimOps.operations.halfBottom)
+windowModal:bind('', 'k', vimOps.operations.halfTop)
 
-modal:bind('', 'y', quarterLT)
-modal:bind('', 'u', quarterLB)
-modal:bind('', 'i', quarterRT)
-modal:bind('', 'o', quarterRB)
+windowModal:bind('', 'y', vimOps.operations.quarterLT)
+windowModal:bind('', 'u', vimOps.operations.quarterLB)
+windowModal:bind('', 'i', vimOps.operations.quarterRT)
+windowModal:bind('', 'o', vimOps.operations.quarterRB)
 
 -- 左右 2/3 绑定（使用大写 H / L）
-modal:bind('', 'H', twoThirdLeft)
-modal:bind('', 'L', twoThirdRight)
+windowModal:bind('', 'H', vimOps.operations.twoThirdLeft)
+windowModal:bind('', 'L', vimOps.operations.twoThirdRight)
 
-modal:bind('', 'f', function()
-  local win = safeFocusWindow()
-  if win then win:maximize() end
-end)
+windowModal:bind('', 'f', vimOps.operations.maximize)
+windowModal:bind('', 'c', vimOps.operations.close)
 
-modal:bind('', 'c', function()
-  local win = safeFocusWindow()
-  if win then win:close() end
-end)
+windowModal:bind('', 'tab', showHelp)
+windowModal:bind('', 'q', function() windowModal:exit() end)
+windowModal:bind('', 'escape', function() windowModal:exit() end)
 
-modal:bind('', 'tab', function()
-  showHelp()
-end)
+-- 创建命令模式（预留，暂不实现）
+local commandModal = hs.hotkey.modal.new({'alt'}, 'v')
 
-modal:bind('', 'q', function() modal:exit() end)
-modal:bind('', 'escape', function() modal:exit() end)
+function commandModal:entered()
+  hs.alert.show('命令模式（暂未实现）', 1)
+  -- 立即退出，因为暂未实现
+  hs.timer.doAfter(1, function()
+    commandModal:exit()
+  end)
+end
 
--- 如果需要在进入时高亮当前窗口或显示帮助，可在 entered 中实现
+function commandModal:exited()
+  hs.alert.show('退出命令模式', 1)
+end
 
--- 导出为空模块（按 require 即可注册）
-return {}
+-- 导出模块
+return {
+  windowModal = windowModal,
+  commandModal = commandModal
+}
