@@ -1,92 +1,124 @@
 -- **************************************************
--- Vim 风格窗口操作逻辑
--- 提供各种窗口布局调整功能
+-- Vim-style window operation logic
+-- Provides various window layout adjustment functions
 -- **************************************************
 
 local config = nil
 pcall(function() config = require('modules.utils.config') end)
 
--- 安全获取当前焦点窗口
+-- Cache for screen frames to improve performance
+local screenCache = {}
+local cacheTime = 0
+local CACHE_DURATION = 1 -- seconds
+
+local function getCachedScreenFrame(win)
+  local now = hs.timer.absoluteTime()
+  if now - cacheTime > CACHE_DURATION * 1000000000 then -- convert to nanoseconds
+    screenCache = {}
+    cacheTime = now
+  end
+  
+  local screen = win:screen()
+  local screenId = screen:id()
+  if not screenCache[screenId] then
+    screenCache[screenId] = screen:frame()
+  end
+  return screenCache[screenId]
+end
+
+-- Safely get current focused window
 local function safeFocusWindow()
   local win = hs.window.frontmostWindow()
   if not win then
-    hs.alert.show('没有焦点窗口')
+    hs.alert.show('No focused window')
+    return nil
+  end
+  -- Additional check: ensure window is valid
+  if not win:isVisible() or not win:frame() then
+    hs.alert.show('Window is not valid')
     return nil
   end
   return win
 end
 
--- 设置窗口框架
+-- Set window frame with error handling
 local function setFrame(win, rect)
-  if not win then return end
-  win:setFrame(rect)
+  if not win then 
+    print('Error: No window provided to setFrame')
+    return 
+  end
+  if not rect or type(rect) ~= 'table' then
+    print('Error: Invalid rect provided to setFrame')
+    return
+  end
+  pcall(function() win:setFrame(rect) end)
 end
 
--- 窗口操作函数
+-- Window operation functions
 local operations = {
-  -- 半屏操作
+  -- Half screen operations
   halfLeft = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x, y = screen.y, w = screen.w / 2, h = screen.h })
   end,
 
   halfRight = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x + screen.w / 2, y = screen.y, w = screen.w / 2, h = screen.h })
   end,
 
   halfTop = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x, y = screen.y, w = screen.w, h = screen.h / 2 })
   end,
 
   halfBottom = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x, y = screen.y + screen.h / 2, w = screen.w, h = screen.h / 2 })
   end,
 
-  -- 四分之一屏操作
+  -- Quarter screen operations
   quarterLT = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x, y = screen.y, w = screen.w / 2, h = screen.h / 2 })
   end,
 
   quarterLB = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x, y = screen.y + screen.h / 2, w = screen.w / 2, h = screen.h / 2 })
   end,
 
   quarterRT = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x + screen.w / 2, y = screen.y, w = screen.w / 2, h = screen.h / 2 })
   end,
 
   quarterRB = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     setFrame(win, { x = screen.x + screen.w / 2, y = screen.y + screen.h / 2, w = screen.w / 2, h = screen.h / 2 })
   end,
 
-  -- 2/3屏操作
+  -- 2/3 screen operations
   twoThirdLeft = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     local ratio = (config and config.window and config.window.twoThirdRatio) or (2/3)
     setFrame(win, { x = screen.x, y = screen.y, w = screen.w * ratio, h = screen.h })
   end,
@@ -94,12 +126,12 @@ local operations = {
   twoThirdRight = function()
     local win = safeFocusWindow()
     if not win then return end
-    local screen = win:screen():frame()
+    local screen = getCachedScreenFrame(win)
     local ratio = (config and config.window and config.window.twoThirdRatio) or (2/3)
     setFrame(win, { x = screen.x + screen.w * (1 - ratio), y = screen.y, w = screen.w * ratio, h = screen.h })
   end,
 
-  -- 其他操作
+  -- Other operations
   maximize = function()
     local win = safeFocusWindow()
     if win then win:maximize() end
@@ -111,20 +143,20 @@ local operations = {
   end
 }
 
--- 帮助信息
+-- Help message
 local helpMessage = [[
-窗口管理（按 q 或 Esc 退出）
+Window Management (Press q or Esc to exit)
 
-h: 左半屏    l: 右半屏
-j: 下半屏    k: 上半屏
-y: 左上四分  u: 左下四分
-i: 右上四分  o: 右下四分
-H: 左三分之二  L: 右三分之二
-f: 最大化    c: 关闭窗口
-tab: 显示帮助
+h: Left half    l: Right half
+j: Bottom half  k: Top half
+y: Top-left quarter  u: Bottom-left quarter
+i: Top-right quarter o: Bottom-right quarter
+H: Left two-thirds   L: Right two-thirds
+f: Maximize     c: Close window
+tab: Show help
 ]]
 
--- 返回操作模块
+-- Return operations module
 return {
   operations = operations,
   helpMessage = helpMessage,

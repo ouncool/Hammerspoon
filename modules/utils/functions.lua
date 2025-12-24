@@ -52,13 +52,13 @@ function Utils.clamp(value, min, max)
   return math.max(math.min(value, max), min)
 end
 
---- 过渡效果工具函数
--- @param options 参数配置
---   @field duration 过渡时长
---   @field easing 缓动函数，函数接受一个真实进度并返回缓动后的进度
---   @field onProgress 过渡时触发
---   @field onEnd 过渡结束后触发
--- @return 用于取消过渡的函数
+--- Transition effect utility function
+-- @param options Parameter configuration
+--   @field duration Transition duration
+--   @field easing Easing function, accepts real progress and returns eased progress
+--   @field onProgress Triggered during transition
+--   @field onEnd Triggered after transition ends
+-- @return Function to cancel transition
 function Utils.animate(options)
   local duration = options.duration
   local easing = options.easing

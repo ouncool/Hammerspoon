@@ -42,8 +42,7 @@
 ### 键盘增强
 - **粘贴助手** (`Cmd + Shift + V`): 绕过网站粘贴限制
 
-### 工作助手
-- （暂无功能模块）
+
 
 ### 应用集成
 - **Finder → 终端** (`Cmd + Alt + T`): 在 Ghostty 终端中打开当前 Finder 目录
@@ -71,23 +70,6 @@ local ENGLISH_APPS = {
 ### 自定义窗口管理器
 编辑 `modules/window/manager.lua`，修改快捷键或布局。
 
-### 图片压缩模块（剪切板）
-项目新增了一个图片压缩模块，用于将剪切板中的图片压缩并复制回剪切板，常用于快速粘贴体积较小的截图或图片。
-
-- 触发方式：进入窗口管理模式（`Alt + R`），在模式下快速按两次 `i`（即 `ii`）会执行压缩并复制回剪切板。
-- 默认行为：先将图片按比例缩放到最大边长 `1600` 像素（可配置），然后以 JPEG 格式导出，默认质量 `60`（可配置）。
-- 配置项：可在 `modules/utils/config.lua` 中修改默认值：
-  - `image.quality`：JPEG 压缩质量（0-100），默认 `60`。
-  - `image.maxDim`：最大边长（像素），默认 `1600`。
-
-示例：编辑 `modules/utils/config.lua`，例如把质量设为 50：
-
-```lua
-config = require('modules.utils.config')
-config.image.quality = 50
-```
-
-（或者直接在 `image-compressor` 的调用处传入参数：`compressImageFromPasteboard(quality, maxDim)`）
 
 ## 快捷键参考
 
@@ -111,32 +93,3 @@ config.image.quality = 50
 - [Hammerspoon 官方文档](https://www.hammerspoon.org/docs/)
 - [Hammerspoon API](https://www.hammerspoon.org/docs/index.html)
 
-## 归档与备份
-- 旧脚本与备份文件已移动到 `legacy/` 目录，例如 `legacy/1.lua`、`legacy/inputswith2.lua`，主目录仅保留模块化实现。
-
-## 本地配置示例（`.env`）
-
-为了避免将公司或个人的敏感配置（例如 Wi‑Fi 名称、输入法 ID 等）提交到仓库，项目支持在本地放置一个不被提交的 `.env` 文件（位置：`~/.hammerspoon/.env`）。以下是 `example.env` 中的示例内容，复制并根据需要修改为你的本地值：
-
-```
-# Example env file for ~/.hammerspoon
-#
-# This file is intended as a harmless example to show how to configure
-# local, sensitive values such as company Wi‑Fi SSIDs. Do NOT put real
-# secrets here if you plan to commit this file; instead copy this to
-# `.env` and edit the real values locally. The real `.env` file is
-# ignored by `.gitignore`.
-#
-# Options:
-# - WORK_SSIDS: comma-separated list of SSIDs
-# - WORK_SSID1 / WORK_SSID2 ... : alternate individual entries
-
-# Example using a comma-separated list:
-WORK_SSIDS=COMPANY_WIFI,COMPANY_WIFI_5G
-
-# Or using individual variables:
-#WORK_SSID1=COMPANY_WIFI
-#WORK_SSID2=COMPANY_WIFI_5G
-```
-
-模块 `modules/work/wifi-mute.lua` 会优先读取 `~/.hammerspoon/.env` 中的 `WORK_SSIDS` 或 `WORK_SSID*`，若不存在则使用文件中内置的默认值。

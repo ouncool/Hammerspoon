@@ -1,17 +1,17 @@
 -- **************************************************
--- 输入法指示器
+-- Input method indicator
 -- **************************************************
 
 -- --------------------------------------------------
--- 指示器高度
+-- Indicator height
 local HEIGHT = 6
--- 指示器透明度
+-- Indicator transparency
 local ALPHA = 1
--- 多个颜色之间线性渐变
+-- Linear gradient between multiple colors
 local ENABLE_COLOR_GRADIENT = false
--- 指示器颜色
+-- Indicator colors
 local IME_TO_COLORS = {
-  -- 微信输入法
+  -- WeChat input method
   ['com.tencent.inputmethod.wetype.pinyin'] = {
     { hex = '#de2910' },
     -- { hex = '#eab308' },
@@ -23,7 +23,7 @@ local IME_TO_COLORS = {
 local canvases = {}
 local lastSourceID = nil
 
--- 绘制指示器
+-- Draw indicator
 local function draw(colors)
   local screens = hs.screen.allScreens()
 
@@ -69,7 +69,7 @@ local function draw(colors)
   end
 end
 
--- 清除 canvas 上的内容
+-- Clear canvas content
 local function clear()
   for _, canvas in ipairs(canvases) do
     canvas:delete()
@@ -77,7 +77,7 @@ local function clear()
   canvases = {}
 end
 
--- 更新 canvas 显示
+-- Update canvas display
 local function update(sourceID)
   clear()
 
@@ -97,24 +97,24 @@ local function handleInputSourceChanged()
   end
 end
 
--- 输入法变化事件监听
--- 通过 hs.keycodes.inputSourceChanged 方式监听有时候不触发，直接监听系统事件可以解决，
--- 参考 https://github.com/Hammerspoon/hammerspoon/issues/1499）
+-- Input method change event listener
+-- Sometimes hs.keycodes.inputSourceChanged doesn't trigger, listening to system events can solve this,
+-- Reference: https://github.com/Hammerspoon/hammerspoon/issues/1499
 local imi_dn = hs.distributednotifications.new(
   handleInputSourceChanged,
   -- or 'AppleSelectedInputSourcesChangedNotification'
   'com.apple.Carbon.TISNotifySelectedKeyboardInputSourceChanged'
 )
--- 每秒同步一次，避免由于错过事件监听导致状态不同步
+-- Sync every second to avoid state desync due to missed event listening
 local imi_indicatorSyncTimer = hs.timer.new(1, handleInputSourceChanged)
--- 屏幕变化时候重新渲染
+-- Re-render when screen changes
 local imi_screenWatcher = hs.screen.watcher.new(update)
 
 imi_dn:start()
 imi_indicatorSyncTimer:start()
 imi_screenWatcher:start()
 
--- 初始执行一次
+-- Execute once initially
 update()
 
 return {

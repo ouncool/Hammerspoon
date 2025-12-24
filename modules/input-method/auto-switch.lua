@@ -1,23 +1,24 @@
 -- **************************************************
--- 输入法自动切换：根据应用自动切换输入法
+-- Input method auto-switch: Automatically switch input method based on app
 -- **************************************************
--- 默认使用搜狗拼音，指定应用使用英文输入法
+-- Default to Sogou Pinyin, use English for specified apps
 -- **************************************************
 
 local utils = require('modules.utils.functions')
+local config = require('modules.utils.config')
 
 -- --------------------------------------------------
--- 配置区域
+-- Configuration Area
 -- --------------------------------------------------
 
--- 默认输入法（搜狗拼音）
-local DEFAULT_IME = 'com.sogou.inputmethod.sogou.pinyin'
+-- Default input method (Sogou Pinyin)
+local DEFAULT_IME = config.inputMethod and config.inputMethod.default or 'com.sogou.inputmethod.sogou.pinyin'
 
--- 英文输入法
-local ABC = 'com.apple.keylayout.ABC'
+-- English input method
+local ABC = config.inputMethod and config.inputMethod.english or 'com.apple.keylayout.ABC'
 
--- 需要使用英文输入法的应用列表
-local ENGLISH_APPS = {
+-- Apps that need English input method
+local ENGLISH_APPS = config.inputMethod and config.inputMethod.englishApps or {
   '/Applications/Terminal.app',
   '/Applications/Ghostty.app',
   '/Applications/iTerm.app',
@@ -32,7 +33,7 @@ local ENGLISH_APPS = {
 -- 实现
 -- --------------------------------------------------
 
--- 将应用列表转换为快速查找表
+-- Convert application list to fast lookup table
 local function updateFocusedAppInputMethod(appObject)
   if not appObject then
     return
@@ -42,7 +43,7 @@ local function updateFocusedAppInputMethod(appObject)
   local focusedBundleID = appObject:bundleID() or ''
   local focusedName = appObject:name() or ''
 
-  -- 支持用路径、bundleID 或 应用名来匹配；增加大小写不敏感的子串匹配，提升对类似 Raycast 这种启动行为的覆盖。
+  -- Support matching by path, bundleID, or app name; add case-insensitive substring matching to improve coverage for apps like Raycast
   local function contains(hay, needle)
     if not hay or not needle then
       return false
@@ -59,7 +60,7 @@ local function updateFocusedAppInputMethod(appObject)
     end
   end
 
-  -- 如果出现 Raycast 但未匹配到，输出调试信息便于定位 bundleID/路径/名称
+  -- If Raycast is detected but not matched, output debug info to locate bundleID/path/name
   if (contains(focusedAppPath, 'raycast') or contains(focusedBundleID, 'raycast') or contains(focusedName, 'raycast')) and not isEnglish then
     print("[InputMethod] Raycast detected but not matched. Details:")
     print("  path=", focusedAppPath)
@@ -74,10 +75,10 @@ local function updateFocusedAppInputMethod(appObject)
   end
 end
 
--- 防抖处理，避免频繁切换
+-- Debounce processing to avoid frequent switching
 local debouncedUpdateFn = utils.debounce(updateFocusedAppInputMethod, 0.1)
 
--- 监听应用切换事件
+-- Listen to application switch events
 local appWatcher = hs.application.watcher.new(
   function(appName, eventType, appObject)
     if eventType == hs.application.watcher.activated then
@@ -88,7 +89,7 @@ local appWatcher = hs.application.watcher.new(
 appWatcher:start()
 
 print("Input Method Auto Switch loaded:")
-print("  - Default: 搜狗拼音")
+print("  - Default: Sogou Pinyin")
 print("  - English apps: " .. #ENGLISH_APPS .. " configured")
 
 return { watcher = appWatcher }

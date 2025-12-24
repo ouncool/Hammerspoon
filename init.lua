@@ -1,23 +1,39 @@
 -- **************************************************
--- Hammerspoon 配置主入口
+-- Hammerspoon Main Configuration Entry
 -- **************************************************
 
--- 重载配置的快捷键
+-- Hotkey to reload configuration
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "R", function()
   hs.reload()
 end)
 
--- 辅助函数：安全加载模块
+-- Helper function: Safely load module with enhanced error handling
 local function loadModule(name)
+  if not name or type(name) ~= 'string' then
+    hs.notify.new({title="Hammerspoon", informativeText="Invalid module name: " .. tostring(name)}):send()
+    print("❌ Error: Invalid module name provided")
+    return nil
+  end
+  
   local ok, result = pcall(require, name)
   
   if ok then
-    -- 如果模块返回了 start 或 init 函数，自动调用
+    -- If module returns start or init function, call it automatically
     if type(result) == 'table' then
-      if result.start then
-        result.start()
-      elseif result.init then
-        result.init()
+      if result.start and type(result.start) == 'function' then
+        local startOk, startErr = pcall(result.start)
+        if not startOk then
+          hs.notify.new({title="Hammerspoon", informativeText="Failed to start module: " .. name .. "\n" .. tostring(startErr)}):send()
+          print("❌ Error starting module: " .. name .. "\n" .. tostring(startErr))
+          return nil
+        end
+      elseif result.init and type(result.init) == 'function' then
+        local initOk, initErr = pcall(result.init)
+        if not initOk then
+          hs.notify.new({title="Hammerspoon", informativeText="Failed to init module: " .. name .. "\n" .. tostring(initErr)}):send()
+          print("❌ Error initializing module: " .. name .. "\n" .. tostring(initErr))
+          return nil
+        end
       end
     end
     return result
@@ -29,30 +45,30 @@ local function loadModule(name)
 end
 
 -- ==================================================
--- 模块加载
+-- Module Loading
 -- ==================================================
 
 -- --------------------------------------------------
--- 输入法相关
+-- Input Method Related
 -- --------------------------------------------------
-loadModule('modules.input-method.auto-switch')    -- 自动切换输入法（默认搜狗，指定应用用英文）
--- loadModule('modules.input-method.indicator')      -- 输入法状态指示器
+loadModule('modules.input-method.auto-switch')    -- Auto-switch input method (default Sogou, English for specified apps)
+-- loadModule('modules.input-method.indicator')      -- Input method status indicator
 
 -- --------------------------------------------------
--- 窗口管理
+-- Window Management
 -- --------------------------------------------------
-loadModule('modules.window.manager')              -- Vim风格窗口管理器 (Alt+R)
+loadModule('modules.window.manager')              -- Vim-style window manager (Alt+R)
 
 -- --------------------------------------------------
--- 键盘增强
+-- Keyboard Enhancement
 -- --------------------------------------------------
-loadModule('modules.keyboard.paste-helper')       -- Cmd+Shift+V绕过粘贴限制
+loadModule('modules.keyboard.paste-helper')       -- Cmd+Shift+V bypass paste restrictions
 
 -- --------------------------------------------------
--- 应用集成
+-- Application Integration
 -- --------------------------------------------------
-loadModule('modules.integration.finder-terminal') -- Cmd+Alt+T/V 在终端/VSCode打开Finder目录
-loadModule('modules.integration.preview-pdf-fullscreen') -- 预览程序打开PDF文件时自动全屏
+loadModule('modules.integration.finder-terminal') -- Cmd+Alt+T/V open Finder directory in terminal/VSCode
+loadModule('modules.integration.preview-pdf-fullscreen') -- Auto fullscreen when opening PDF in Preview
 
--- 配置加载完成
+-- Configuration loaded
 hs.alert.show("✅ Hammerspoon Config Loaded")
