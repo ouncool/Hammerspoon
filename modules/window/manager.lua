@@ -11,6 +11,9 @@
 -- **************************************************
 
 local vimOps = require('modules.window.vim-operations')
+local Logger = require('modules.core.logger')
+
+local log = Logger.new('WindowManager')
 
 -- Create window management modal
 local windowModal = hs.hotkey.modal.new({'alt'}, 'r')
@@ -27,10 +30,12 @@ end
 -- Prompt when entering mode
 function windowModal:entered()
   hs.alert.show('Window Management Mode', 1)
+  log.debug('Entered window management mode')
 end
 
 function windowModal:exited()
   hs.alert.show('Exit Window Management', 1)
+  log.debug('Exited window management mode')
 end
 
 -- Bind window operation keys
@@ -70,8 +75,36 @@ function commandModal:exited()
   hs.alert.show('Exit Command Mode', 1)
 end
 
+-- Lifecycle functions
+local function init()
+  log.info('Initializing window manager')
+  return true
+end
+
+local function start()
+  log.info('Starting window manager')
+  return true
+end
+
+local function stop()
+  log.info('Stopping window manager')
+end
+
+local function cleanup()
+  log.info('Cleaning up window manager')
+  -- Clean up timers
+  if helpTimer then
+    helpTimer:stop()
+    helpTimer = nil
+  end
+end
+
 -- Export module
 return {
+  init = init,
+  start = start,
+  stop = stop,
+  cleanup = cleanup,
   windowModal = windowModal,
   commandModal = commandModal
 }

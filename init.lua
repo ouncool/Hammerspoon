@@ -2,47 +2,107 @@
 -- Hammerspoon Main Configuration Entry
 -- **************************************************
 
+-- Load core systems first
+local Logger = require('modules.core.logger')
+local EventBus = require('modules.core.event-bus')
+local Lifecycle = require('modules.core.lifecycle')
+local Validator = require('modules.core.validator')
+
+-- Configure logger
+Logger.setLevel('INFO')
+Logger.setDestination('console', true)
+Logger.setDestination('notification', true)
+
+local log = Logger.new('Init')
+
 -- Hotkey to reload configuration
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "R", function()
   hs.reload()
 end)
 
--- Helper function: Safely load module with enhanced error handling
-local function loadModule(name)
+-- Load and validate configuration
+local config = require('modules.utils.config')
+local validConfig = Validator.mergeWithDefaults(config)
+
+if not Validator.validateAndReport(validConfig) then
+  log.warn('Configuration validation failed, using defaults')
+end
+
+-- Apply logging configuration from config
+if validConfig.logging then
+  if validConfig.logging.level then
+    Logger.setLevel(validConfig.logging.level)
+  end
+  if validConfig.logging.file ~= nil then
+    Logger.setDestination('file', validConfig.logging.file)
+  end
+  if validConfig.logging.console ~= nil then
+    Logger.setDestination('console', validConfig.logging.console)
+  end
+  if validConfig.logging.notification ~= nil then
+    Logger.setDestination('notification', validConfig.logging.notification)
+  end
+end
+
+-- Helper function: Safely load module with lifecycle management
+local function loadModule(name, options)
+  options = options or {}
+  
   if not name or type(name) ~= 'string' then
-    hs.notify.new({title="Hammerspoon", informativeText="Invalid module name: " .. tostring(name)}):send()
-    print("❌ Error: Invalid module name provided")
+    log.error('Invalid module name: ' .. tostring(name))
     return nil
   end
   
   local ok, result = pcall(require, name)
   
-  if ok then
-    -- If module returns start or init function, call it automatically
-    if type(result) == 'table' then
-      if result.start and type(result.start) == 'function' then
-        local startOk, startErr = pcall(result.start)
-        if not startOk then
-          hs.notify.new({title="Hammerspoon", informativeText="Failed to start module: " .. name .. "\n" .. tostring(startErr)}):send()
-          print("❌ Error starting module: " .. name .. "\n" .. tostring(startErr))
-          return nil
-        end
-      elseif result.init and type(result.init) == 'function' then
-        local initOk, initErr = pcall(result.init)
-        if not initOk then
-          hs.notify.new({title="Hammerspoon", informativeText="Failed to init module: " .. name .. "\n" .. tostring(initErr)}):send()
-          print("❌ Error initializing module: " .. name .. "\n" .. tostring(initErr))
-          return nil
-        end
-      end
-    end
-    return result
-  else
-    hs.notify.new({title="Hammerspoon", informativeText="Failed to load module: " .. name .. "\n" .. tostring(result)}):send()
-    print("❌ Error loading module: " .. name .. "\n" .. tostring(result))
+  if not ok then
+    log.error('Failed to load module: ' .. name, { error = result })
+    hs.notify.new({
+      title = "Hammerspoon",
+      informativeText = "Failed to load module: " .. name .. "\n" .. tostring(result)
+    }):send()
     return nil
   end
+  
+  -- Register with lifecycle manager
+  Lifecycle.register(name, result, options.dependencies)
+  
+  -- Initialize module
+  if options.autoInit ~= false then
+    if not Lifecycle.init(name) then
+      log.warn('Module initialization failed: ' .. name)
+      return result
+    end
+  end
+  
+  -- Start module
+  if options.autoStart ~= false then
+    if not Lifecycle.start(name) then
+      log.warn('Module start failed: ' .. name)
+      return result
+    end
+  end
+  
+  return result
 end
+
+-- ==================================================
+-- Core System Events
+-- ==================================================
+
+-- Emit config reloaded event
+EventBus.emit(EventBus.EVENTS.CONFIG_RELOADED, {
+  config = validConfig,
+  timestamp = hs.timer.absoluteTime()
+})
+
+-- Watch for screen changes
+hs.screen.watcher.new(function()
+  EventBus.emit(EventBus.EVENTS.SCREEN_CHANGED, {
+    screens = hs.screen.allScreens(),
+    timestamp = hs.timer.absoluteTime()
+  })
+end):start()
 
 -- ==================================================
 -- Module Loading
@@ -51,24 +111,55 @@ end
 -- --------------------------------------------------
 -- Input Method Related
 -- --------------------------------------------------
-loadModule('modules.input-method.auto-switch')    -- Auto-switch input method (default Sogou, English for specified apps)
--- loadModule('modules.input-method.indicator')      -- Input method status indicator
+loadModule('modules.input-method.auto-switch', {
+  dependencies = {},
+  autoStart = true
+})
+-- loadModule('modules.input-method.indicator', {
+--   dependencies = {'modules.input-method.auto-switch'},
+--   autoStart = false  -- Disabled by default
+-- })
 
 -- --------------------------------------------------
 -- Window Management
 -- --------------------------------------------------
-loadModule('modules.window.manager')              -- Vim-style window manager (Alt+R)
+loadModule('modules.window.manager', {
+  dependencies = {},
+  autoStart = true
+})
 
 -- --------------------------------------------------
 -- Keyboard Enhancement
 -- --------------------------------------------------
-loadModule('modules.keyboard.paste-helper')       -- Cmd+Shift+V bypass paste restrictions
+loadModule('modules.keyboard.paste-helper', {
+  dependencies = {},
+  autoStart = true
+})
 
 -- --------------------------------------------------
 -- Application Integration
 -- --------------------------------------------------
-loadModule('modules.integration.finder-terminal') -- Cmd+Alt+T/V open Finder directory in terminal/VSCode
-loadModule('modules.integration.preview-pdf-fullscreen') -- Auto fullscreen when opening PDF in Preview
+loadModule('modules.integration.finder-terminal', {
+  dependencies = {},
+  autoStart = true
+})
+
+loadModule('modules.integration.preview-pdf-fullscreen', {
+  dependencies = {},
+  autoStart = true
+})
+
+-- ==================================================
+-- System Ready
+-- ==================================================
+
+-- Print module status
+Lifecycle.printStatus()
+
+-- Print statistics
+EventBus.printStats()
+Logger.printStats()
 
 -- Configuration loaded
 hs.alert.show("✅ Hammerspoon Config Loaded")
+log.info('Hammerspoon configuration loaded successfully')

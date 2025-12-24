@@ -2,13 +2,18 @@
 -- Auto fullscreen when opening PDF files in Preview
 -- **************************************************
 
--- Get utility functions
 local Utils = require('modules.utils.functions')
+local Logger = require('modules.core.logger')
+local EventBus = require('modules.core.event-bus')
+
+local log = Logger.new('PreviewPDF')
 
 -- Preview app name (compatible with Chinese and English systems)
 local PREVIEW_APP = "预览"
 local PREVIEW_APP_EN = "Preview"
 local PREVIEW_BUNDLE_ID = "com.apple.Preview"
+
+local wf = nil
 
 -- Check if window title indicates a PDF file
 local function isPDFWindow(window)
@@ -27,7 +32,16 @@ local function setFullscreen(window)
   if not window then return end
   -- Delay execution to ensure window is fully loaded
   hs.timer.doAfter(0.5, function()
-    pcall(function() window:setFullScreen(true) end)
+    local ok, err = pcall(function() window:setFullScreen(true) end)
+    if ok then
+      log.info('Set PDF to fullscreen', { title = window:title() })
+      EventBus.emit(EventBus.EVENTS.CUSTOM .. 'pdf.fullscreen', {
+        window = window,
+        title = window:title()
+      })
+    else
+      log.error('Failed to set fullscreen', { error = err })
+    end
   end)
 end
 
@@ -36,9 +50,15 @@ local function isPreviewApp(appName, bundleID)
   return (appName == PREVIEW_APP or appName == PREVIEW_APP_EN) or bundleID == PREVIEW_BUNDLE_ID
 end
 
-local wf = nil
+-- Lifecycle functions
+local function init()
+  log.info('Initializing preview PDF fullscreen')
+  return true
+end
 
 local function start()
+  log.info('Starting preview PDF fullscreen')
+  
   -- Use hs.window.filter to subscribe to window events
   -- Optimization: Only listen to Preview app, avoid scanning all windows
   local ok_wf, filter = pcall(function() 
@@ -61,9 +81,33 @@ local function start()
     wf:subscribe(hs.window.filter.windowCreated, function(win, appName) debouncedHandle(win) end)
     wf:subscribe(hs.window.filter.windowFocused, function(win, appName) debouncedHandle(win) end)
     wf:subscribe(hs.window.filter.windowTitleChanged, function(win, appName) debouncedHandle(win) end)
+    
+    log.info('Window filter subscribed successfully')
   else
-    hs.printf("❌ preview-pdf-fullscreen: Failed to create window filter")
+    log.error('Failed to create window filter')
+  end
+  
+  return true
+end
+
+local function stop()
+  log.info('Stopping preview PDF fullscreen')
+  
+  if wf then
+    wf:unsubscribe()
+    wf = nil
   end
 end
 
-return { start = start }
+local function cleanup()
+  log.info('Cleaning up preview PDF fullscreen')
+  stop()
+end
+
+-- Export module
+return {
+  init = init,
+  start = start,
+  stop = stop,
+  cleanup = cleanup
+}

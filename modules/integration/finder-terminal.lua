@@ -5,7 +5,15 @@
 -- Cmd+Alt+V: Open in VS Code
 -- **************************************************
 
+local Logger = require('modules.core.logger')
+local EventBus = require('modules.core.event-bus')
+
+local log = Logger.new('FinderIntegration')
+
 local M = {}
+
+local terminalHotkey = nil
+local vscodeHotkey = nil
 
 -- Escape shell path
 local function shellQuote(str)
@@ -45,8 +53,16 @@ function M.openInTerminal()
         path = path:gsub("^%s*(.-)%s*$", "%1")
         print("Opening terminal path: " .. path)
         hs.execute("open -a Ghostty " .. shellQuote(path))
+        
+        EventBus.emit(EventBus.EVENTS.CUSTOM .. 'terminal.opened', {
+            path = path,
+            app = 'Ghostty'
+        })
+        
+        log.info('Opened terminal', { path = path })
     else
         hs.alert.show("Unable to get Finder path")
+        log.error('Failed to get Finder path')
     end
 end
 
@@ -70,20 +86,64 @@ function M.openInVSCode()
                 -- Use open command
                 hs.execute("open -a 'Visual Studio Code' " .. shellQuote(path))
             end
+            
+            EventBus.emit(EventBus.EVENTS.CUSTOM .. 'vscode.opened', {
+                path = path,
+                app = 'VSCode'
+            })
+            
+            log.info('Opened VS Code', { path = path })
         else
             hs.alert.show("Visual Studio Code not found")
+            log.error('VS Code not found')
         end
     else
         hs.alert.show("Unable to get Finder path")
+        log.error('Failed to get Finder path')
     end
 end
 
--- Bind hotkeys
-hs.hotkey.bind({'cmd', 'alt'}, 'T', M.openInTerminal)
-hs.hotkey.bind({'cmd', 'alt'}, 'V', M.openInVSCode)
+-- Lifecycle functions
+local function init()
+    log.info('Initializing finder integration')
+    return true
+end
 
-print("Finder Integration loaded:")
-print("  - Cmd+Alt+T: Open in Ghostty")
-print("  - Cmd+Alt+V: Open in VS Code")
+local function start()
+    log.info('Starting finder integration')
+    
+    -- Bind hotkeys
+    terminalHotkey = hs.hotkey.bind({'cmd', 'alt'}, 'T', M.openInTerminal)
+    vscodeHotkey = hs.hotkey.bind({'cmd', 'alt'}, 'V', M.openInVSCode)
+    
+    return true
+end
 
-return M
+local function stop()
+    log.info('Stopping finder integration')
+    
+    -- Delete hotkeys
+    if terminalHotkey then
+        terminalHotkey:delete()
+        terminalHotkey = nil
+    end
+    if vscodeHotkey then
+        vscodeHotkey:delete()
+        vscodeHotkey = nil
+    end
+end
+
+local function cleanup()
+    log.info('Cleaning up finder integration')
+    stop()
+end
+
+-- Export module
+return {
+    init = init,
+    start = start,
+    stop = stop,
+    cleanup = cleanup,
+    openInTerminal = M.openInTerminal,
+    openInVSCode = M.openInVSCode
+}

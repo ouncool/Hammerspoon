@@ -26,8 +26,5 @@ Temporary Items
 .claude/
 
 # Hammerspoon specific
-Spoons/
-!Spoons/.gitkeep
-
-# Local env file for secrets (do not commit)
-.env
+*.log
+/tmp/

@@ -6,6 +6,10 @@
 
 local utils = require('modules.utils.functions')
 local config = require('modules.utils.config')
+local EventBus = require('modules.core.event-bus')
+local Logger = require('modules.core.logger')
+
+local log = Logger.new('InputMethod')
 
 -- --------------------------------------------------
 -- Configuration Area
@@ -30,7 +34,71 @@ local ENGLISH_APPS = config.inputMethod and config.inputMethod.englishApps or {
 }
 
 -- --------------------------------------------------
--- 实现
+-- Performance Optimization: Pre-compiled Lookup Tables
+-- --------------------------------------------------
+
+-- Build optimized lookup tables for O(1) access
+local englishAppLookup = {
+  byPath = {},
+  byBundleID = {},
+  byName = {},
+  bySubstring = {}
+}
+
+-- Initialize lookup tables
+local function initLookupTables()
+  for _, appDef in ipairs(ENGLISH_APPS) do
+    -- Direct match tables
+    englishAppLookup.byPath[appDef] = true
+    englishAppLookup.byBundleID[appDef] = true
+    englishAppLookup.byName[appDef] = true
+    
+    -- Substring match table (lowercase for case-insensitive matching)
+    local lowerDef = string.lower(appDef)
+    englishAppLookup.bySubstring[lowerDef] = appDef
+  end
+  
+  log.info('Lookup tables initialized', {
+    pathCount = #ENGLISH_APPS,
+    bundleCount = #ENGLISH_APPS,
+    nameCount = #ENGLISH_APPS
+  })
+end
+
+-- Fast substring check with caching
+local substringCache = {}
+local function isEnglishApp(focusedAppPath, focusedBundleID, focusedName)
+  -- O(1) direct lookups first
+  if englishAppLookup.byPath[focusedAppPath] then
+    return true
+  end
+  
+  if englishAppLookup.byBundleID[focusedBundleID] then
+    return true
+  end
+  
+  if englishAppLookup.byName[focusedName] then
+    return true
+  end
+  
+  -- Fallback to substring matching (only if direct match fails)
+  local lowerPath = string.lower(focusedAppPath or '')
+  local lowerBundle = string.lower(focusedBundleID or '')
+  local lowerName = string.lower(focusedName or '')
+  
+  for pattern, original in pairs(englishAppLookup.bySubstring) do
+    if string.find(lowerPath, pattern, 1, true) or
+       string.find(lowerBundle, pattern, 1, true) or
+       string.find(lowerName, pattern, 1, true) then
+      return true
+    end
+  end
+  
+  return false
+end
+
+-- --------------------------------------------------
+-- Core Logic
 -- --------------------------------------------------
 
 -- Convert application list to fast lookup table
@@ -43,35 +111,38 @@ local function updateFocusedAppInputMethod(appObject)
   local focusedBundleID = appObject:bundleID() or ''
   local focusedName = appObject:name() or ''
 
-  -- Support matching by path, bundleID, or app name; add case-insensitive substring matching to improve coverage for apps like Raycast
-  local function contains(hay, needle)
-    if not hay or not needle then
-      return false
-    end
-    return string.find(string.lower(hay), string.lower(needle), 1, true) ~= nil
-  end
+  -- Use optimized lookup
+  local isEnglish = isEnglishApp(focusedAppPath, focusedBundleID, focusedName)
 
-  local isEnglish = false
-  for _, id in ipairs(ENGLISH_APPS) do
-    if id == focusedAppPath or id == focusedBundleID or id == focusedName
-       or contains(focusedAppPath, id) or contains(focusedBundleID, id) or contains(focusedName, id) then
-      isEnglish = true
-      break
-    end
-  end
+  -- Emit event for other modules
+  EventBus.emit(EventBus.EVENTS.INPUT_METHOD_WILL_CHANGE, {
+    isEnglish = isEnglish,
+    appPath = focusedAppPath,
+    bundleID = focusedBundleID,
+    appName = focusedName
+  })
 
-  -- If Raycast is detected but not matched, output debug info to locate bundleID/path/name
-  if (contains(focusedAppPath, 'raycast') or contains(focusedBundleID, 'raycast') or contains(focusedName, 'raycast')) and not isEnglish then
-    print("[InputMethod] Raycast detected but not matched. Details:")
-    print("  path=", focusedAppPath)
-    print("  bundle=", focusedBundleID)
-    print("  name=", focusedName)
-  end
-
-  if isEnglish then
-    hs.keycodes.currentSourceID(ABC)
-  else
-    hs.keycodes.currentSourceID(DEFAULT_IME)
+  -- Switch input method
+  local targetIME = isEnglish and ABC or DEFAULT_IME
+  local currentIME = hs.keycodes.currentSourceID()
+  
+  if currentIME ~= targetIME then
+    hs.keycodes.currentSourceID(targetIME)
+    
+    log.debug('Input method switched', {
+      from = currentIME,
+      to = targetIME,
+      app = focusedName
+    })
+    
+    -- Emit event after switch
+    EventBus.emit(EventBus.EVENTS.INPUT_METHOD_CHANGED, {
+      ime = targetIME,
+      isEnglish = isEnglish,
+      appPath = focusedAppPath,
+      bundleID = focusedBundleID,
+      appName = focusedName
+    })
   end
 end
 
@@ -82,14 +153,55 @@ local debouncedUpdateFn = utils.debounce(updateFocusedAppInputMethod, 0.1)
 local appWatcher = hs.application.watcher.new(
   function(appName, eventType, appObject)
     if eventType == hs.application.watcher.activated then
+      -- Emit app focused event
+      EventBus.emit(EventBus.EVENTS.APP_FOCUSED, {
+        appName = appName,
+        appObject = appObject
+      })
+      
       debouncedUpdateFn(appObject)
     end
   end
 )
-appWatcher:start()
 
-print("Input Method Auto Switch loaded:")
-print("  - Default: Sogou Pinyin")
-print("  - English apps: " .. #ENGLISH_APPS .. " configured")
+-- Initialize module
+local function init()
+  initLookupTables()
+  return true
+end
 
-return { watcher = appWatcher }
+-- Start module
+local function start()
+  appWatcher:start()
+  log.info('Module started', {
+    defaultIME = DEFAULT_IME,
+    englishIME = ABC,
+    appCount = #ENGLISH_APPS
+  })
+  return true
+end
+
+-- Stop module
+local function stop()
+  appWatcher:stop()
+  log.info('Module stopped')
+end
+
+-- Cleanup module
+local function cleanup()
+  stop()
+  englishAppLookup = {
+    byPath = {},
+    byBundleID = {},
+    byName = {},
+    bySubstring = {}
+  }
+end
+
+return {
+  init = init,
+  start = start,
+  stop = stop,
+  cleanup = cleanup,
+  watcher = appWatcher
+}
