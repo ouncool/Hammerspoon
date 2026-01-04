@@ -65,10 +65,10 @@ A high-performance, modular Hammerspoon configuration with event-driven architec
 
 | Keybinding | Action |
 |------------|--------|
-| `Cmd+Alt+Ctrl+R` | Reload configuration |
+| `Cmd+Ctrl+Alt+R` | Reload configuration |
 | `Alt+R` | Enter window management mode |
-| `Cmd+Alt+T` | Open Finder directory in terminal |
-| `Cmd+Alt+V` | Open Finder directory in VS Code |
+| `Cmd+Ctrl+Alt+T` | Open Finder directory in terminal |
+| `Cmd+Ctrl+Alt+V` | Open Finder directory in VS Code |
 | `Cmd+Shift+V` | Force paste (bypass restrictions) |
 
 ### Window Management Mode (`Alt+R`)
@@ -227,10 +227,10 @@ local ENGLISH_APPS = {
 
 | 快捷键 | 功能 |
 |--------|------|
-| `Cmd+Alt+Ctrl+R` | 重载配置 |
+| `Cmd+Ctrl+Alt+R` | 重载配置 |
 | `Alt+R` | 窗口管理模式 |
-| `Cmd+Alt+T` | 在终端打开Finder目录 |
-| `Cmd+Alt+V` | 在VS Code打开Finder目录 |
+| `Cmd+Ctrl+Alt+T` | 在终端打开Finder目录 |
+| `Cmd+Ctrl+Alt+V` | 在VS Code打开Finder目录 |
 | `Cmd+Shift+V` | 强制粘贴 |
 
 ## 自动功能
