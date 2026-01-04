@@ -1,8 +1,8 @@
 -- **************************************************
 -- Finder Integration: Open current Finder directory in terminal/editor
 -- **************************************************
--- Cmd+Alt+T: Open in Ghostty terminal
--- Cmd+Alt+V: Open in VS Code
+-- Cmd+Ctrl+Alt+T: Open in Ghostty terminal
+-- Cmd+Ctrl+Alt+V: Open in VS Code
 -- **************************************************
 
 local Logger = require('modules.core.logger')
@@ -105,23 +105,23 @@ end
 
 -- Lifecycle functions
 local function init()
-    log.info('Initializing finder integration')
+    log.debug('Initializing finder integration')
     return true
 end
 
 local function start()
-    log.info('Starting finder integration')
-    
+    log.debug('Starting finder integration')
+
     -- Bind hotkeys
-    terminalHotkey = hs.hotkey.bind({'cmd', 'alt'}, 'T', M.openInTerminal)
-    vscodeHotkey = hs.hotkey.bind({'cmd', 'alt'}, 'V', M.openInVSCode)
-    
+    terminalHotkey = hs.hotkey.bind({'cmd', 'ctrl', 'alt'}, 'T', M.openInTerminal)
+    vscodeHotkey = hs.hotkey.bind({'cmd', 'ctrl', 'alt'}, 'V', M.openInVSCode)
+
     return true
 end
 
 local function stop()
-    log.info('Stopping finder integration')
-    
+    log.debug('Stopping finder integration')
+
     -- Delete hotkeys
     if terminalHotkey then
         terminalHotkey:delete()
@@ -134,7 +134,7 @@ local function stop()
 end
 
 local function cleanup()
-    log.info('Cleaning up finder integration')
+    log.debug('Cleaning up finder integration')
     stop()
 end
 

@@ -52,17 +52,17 @@ end
 
 -- Lifecycle functions
 local function init()
-  log.info('Initializing preview PDF fullscreen')
+  log.debug('Initializing preview PDF fullscreen')
   return true
 end
 
 local function start()
-  log.info('Starting preview PDF fullscreen')
-  
+  log.debug('Starting preview PDF fullscreen')
+
   -- Use hs.window.filter to subscribe to window events
   -- Optimization: Only listen to Preview app, avoid scanning all windows
-  local ok_wf, filter = pcall(function() 
-    return hs.window.filter.new({PREVIEW_APP, PREVIEW_APP_EN}) 
+  local ok_wf, filter = pcall(function()
+    return hs.window.filter.new({PREVIEW_APP, PREVIEW_APP_EN})
   end)
 
   if ok_wf and filter then
@@ -72,7 +72,7 @@ local function start()
       -- double check app name just in case
       local app = win:application()
       if not app then return end
-      
+
       if isPreviewApp(app:name(), app:bundleID()) and isPDFWindow(win) and not win:isFullScreen() then
         setFullscreen(win)
       end
@@ -81,18 +81,18 @@ local function start()
     wf:subscribe(hs.window.filter.windowCreated, function(win, appName) debouncedHandle(win) end)
     wf:subscribe(hs.window.filter.windowFocused, function(win, appName) debouncedHandle(win) end)
     wf:subscribe(hs.window.filter.windowTitleChanged, function(win, appName) debouncedHandle(win) end)
-    
-    log.info('Window filter subscribed successfully')
+
+    log.debug('Window filter subscribed successfully')
   else
     log.error('Failed to create window filter')
   end
-  
+
   return true
 end
 
 local function stop()
-  log.info('Stopping preview PDF fullscreen')
-  
+  log.debug('Stopping preview PDF fullscreen')
+
   if wf then
     wf:unsubscribe()
     wf = nil
@@ -100,7 +100,7 @@ local function stop()
 end
 
 local function cleanup()
-  log.info('Cleaning up preview PDF fullscreen')
+  log.debug('Cleaning up preview PDF fullscreen')
   stop()
 end
 

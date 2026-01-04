@@ -161,15 +161,33 @@ function EventBus.getStats()
   }
 end
 
--- Print statistics
+-- Print statistics (only if there's meaningful activity)
 function EventBus.printStats()
   local s = EventBus.getStats()
+
+  -- Skip if no meaningful activity
+  if s.published == 0 and s.processed == 0 and s.errors == 0 and s.subscribers == 0 and s.events == 0 then
+    return
+  end
+
   print('📊 EventBus Statistics:')
   print(string.format('  Events Published: %d', s.published))
-  print(string.format('  Events Processed: %d', s.processed))
-  print(string.format('  Errors: %d', s.errors))
-  print(string.format('  Active Subscribers: %d', s.subscribers))
-  print(string.format('  Event Types: %d', s.events))
+
+  if s.processed > 0 then
+    print(string.format('  Events Processed: %d', s.processed))
+  end
+
+  if s.errors > 0 then
+    print(string.format('  Errors: %d', s.errors))
+  end
+
+  if s.subscribers > 0 then
+    print(string.format('  Active Subscribers: %d', s.subscribers))
+  end
+
+  if s.events > 0 then
+    print(string.format('  Event Types: %d', s.events))
+  end
 end
 
 -- Common event names (constants)

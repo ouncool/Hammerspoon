@@ -77,21 +77,21 @@ end
 
 -- Lifecycle functions
 local function init()
-  log.info('Initializing window manager')
+  log.debug('Initializing window manager')
   return true
 end
 
 local function start()
-  log.info('Starting window manager')
+  log.debug('Starting window manager')
   return true
 end
 
 local function stop()
-  log.info('Stopping window manager')
+  log.debug('Stopping window manager')
 end
 
 local function cleanup()
-  log.info('Cleaning up window manager')
+  log.debug('Cleaning up window manager')
   -- Clean up timers
   if helpTimer then
     helpTimer:stop()

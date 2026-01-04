@@ -153,13 +153,16 @@ loadModule('modules.integration.preview-pdf-fullscreen', {
 -- System Ready
 -- ==================================================
 
--- Print module status
+-- 简洁的启动信息（只在有错误时显示详细统计）
 Lifecycle.printStatus()
+Lifecycle.printHotkeys()
 
--- Print statistics
-EventBus.printStats()
-Logger.printStats()
+-- 只在有错误时显示统计信息
+local stats = Logger.getStats()
+if stats.error > 0 or stats.fatal > 0 then
+  EventBus.printStats()
+  Logger.printStats()
+end
 
 -- Configuration loaded
-hs.alert.show("✅ Hammerspoon Config Loaded")
-log.info('Hammerspoon configuration loaded successfully')
+hs.alert.show("✅ Hammerspoon 配置已加载")

@@ -17,17 +17,17 @@ local hotkey = hs.hotkey.bind({ 'cmd', 'shift' }, 'v', paste)
 
 -- Lifecycle functions
 local function init()
-  log.info('Initializing paste helper')
+  log.debug('Initializing paste helper')
   return true
 end
 
 local function start()
-  log.info('Starting paste helper')
+  log.debug('Starting paste helper')
   return true
 end
 
 local function stop()
-  log.info('Stopping paste helper')
+  log.debug('Stopping paste helper')
   if hotkey then
     hotkey:delete()
     hotkey = nil
@@ -35,7 +35,7 @@ local function stop()
 end
 
 local function cleanup()
-  log.info('Cleaning up paste helper')
+  log.debug('Cleaning up paste helper')
   stop()
 end
 

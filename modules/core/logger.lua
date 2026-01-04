@@ -192,16 +192,35 @@ function Logger.getStats()
   }
 end
 
--- Print statistics
+-- Print statistics (only if there are non-zero entries)
 function Logger.printStats()
   local s = Logger.getStats()
-  print('📊 Logger Statistics:')
-  print(string.format('  DEBUG: %d', s.debug))
-  print(string.format('  INFO: %d', s.info))
-  print(string.format('  WARN: %d', s.warn))
-  print(string.format('  ERROR: %d', s.error))
-  print(string.format('  FATAL: %d', s.fatal))
-  print(string.format('  Total: %d', s.total))
+
+  -- Only show levels that have non-zero counts
+  local lines = {}
+  if s.debug > 0 then
+    table.insert(lines, string.format('  DEBUG: %d', s.debug))
+  end
+  if s.info > 0 then
+    table.insert(lines, string.format('  INFO: %d', s.info))
+  end
+  if s.warn > 0 then
+    table.insert(lines, string.format('  WARN: %d', s.warn))
+  end
+  if s.error > 0 then
+    table.insert(lines, string.format('  ERROR: %d', s.error))
+  end
+  if s.fatal > 0 then
+    table.insert(lines, string.format('  FATAL: %d', s.fatal))
+  end
+
+  if #lines > 0 then
+    print('📊 Logger Statistics:')
+    for _, line in ipairs(lines) do
+      print(line)
+    end
+    print(string.format('  Total: %d', s.total))
+  end
 end
 
 -- Clear statistics
