@@ -196,6 +196,7 @@ EventBus.EVENTS = {
   APP_FOCUSED = 'app.focused',
   APP_LAUNCHED = 'app.launched',
   APP_HIDDEN = 'app.hidden',
+  APP_SWITCHED = 'app.switched',
   
   -- Window events
   WINDOW_FOCUSED = 'window.focused',

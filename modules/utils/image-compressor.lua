@@ -10,8 +10,7 @@ local function getTempDir()
   return os.getenv('TMPDIR') or '/tmp'
 end
 
-local config = nil
-pcall(function() config = require('modules.utils.config') end)
+local config = require('modules.utils.config')
 
 -- Get image from clipboard and save as temporary file
 local function exportImageFromPasteboard()
@@ -126,8 +125,6 @@ local function copyImageToPasteboard(imagePath)
     return true, 'ok'
   end
   
-  print('[DEBUG] AppleScript result: ' .. result)
-  
   -- If first method fails, try method 2: Convert with tiffutil then copy
   local tiffPath = imagePath:gsub('%.jpg$', '.tiff')
   if tiffPath == imagePath then
@@ -156,9 +153,7 @@ local function copyImageToPasteboard(imagePath)
   if result2 == '' then
     return true, 'ok'
   end
-  
-  print('[DEBUG] TIFF AppleScript result: ' .. result2)
-  
+
   return false, 'Failed to copy to clipboard'
 end
 

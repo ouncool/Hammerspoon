@@ -3,8 +3,7 @@
 -- Provides various window layout adjustment functions
 -- **************************************************
 
-local config = nil
-pcall(function() config = require('modules.utils.config') end)
+local config = require('modules.utils.config')
 local EventBus = require('modules.core.event-bus')
 local Logger = require('modules.core.logger')
 

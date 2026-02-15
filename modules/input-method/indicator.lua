@@ -71,8 +71,13 @@ end
 
 -- Clear canvas content
 local function clear()
+  if canvases == nil or #canvases == 0 then
+    return
+  end
   for _, canvas in ipairs(canvases) do
-    canvas:delete()
+    if canvas then
+      canvas:delete()
+    end
   end
   canvases = {}
 end
@@ -105,8 +110,9 @@ local imi_dn = hs.distributednotifications.new(
   -- or 'AppleSelectedInputSourcesChangedNotification'
   'com.apple.Carbon.TISNotifySelectedKeyboardInputSourceChanged'
 )
--- Sync every second to avoid state desync due to missed event listening
-local imi_indicatorSyncTimer = hs.timer.new(1, handleInputSourceChanged)
+-- Sync every 3 seconds (reduced from 1s to avoid overwhelming CursorUIViewService)
+-- The distributed notification listener should catch most changes
+local imi_indicatorSyncTimer = hs.timer.new(3, handleInputSourceChanged)
 -- Re-render when screen changes
 local imi_screenWatcher = hs.screen.watcher.new(update)
 

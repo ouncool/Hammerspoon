@@ -146,8 +146,9 @@ local function updateFocusedAppInputMethod(appObject)
   end
 end
 
--- Debounce processing to avoid frequent switching
-local debouncedUpdateFn = utils.debounce(updateFocusedAppInputMethod, 0.1)
+-- Debounce processing to avoid frequent switching (increased from 0.1s to 0.2s)
+-- This reduces rapid successive input method change requests to CursorUIViewService
+local debouncedUpdateFn = utils.debounce(updateFocusedAppInputMethod, 0.2)
 
 -- Listen to application switch events
 local appWatcher = hs.application.watcher.new(

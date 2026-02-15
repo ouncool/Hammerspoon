@@ -1,12 +1,14 @@
 -- **************************************************
 -- Finder Integration: Open current Finder directory in terminal/editor
 -- **************************************************
--- Cmd+Ctrl+Alt+T: Open in Ghostty terminal
--- Cmd+Ctrl+Alt+V: Open in VS Code
+-- Hyper + F: Open in terminal (Ghostty)
+-- Hyper + V: Open in VS Code
+-- (Hyper = Caps Lock mapped to Cmd+Alt+Ctrl+Shift)
 -- **************************************************
 
 local Logger = require('modules.core.logger')
 local EventBus = require('modules.core.event-bus')
+local Finder = require('modules.utils.finder')
 
 local log = Logger.new('FinderIntegration')
 
@@ -15,51 +17,17 @@ local M = {}
 local terminalHotkey = nil
 local vscodeHotkey = nil
 
--- Escape shell path
-local function shellQuote(str)
-    if not str then return "''" end
-    -- Remove trailing newlines and spaces
-    str = str:gsub("^%s*(.-)%s*$", "%1")
-    -- Wrap in single quotes and escape internal single quotes
-    return "'" .. str:gsub("'", "'\\''") .. "'"
-end
-
--- Get current Finder window path
-local function getFinderPath()
-    local script = [[
-    tell application "Finder"
-        try
-            set topWnd to front window
-            set targetFolder to (target of topWnd) as alias
-            return POSIX path of targetFolder
-        on error
-            -- If no window is open, or selected is not a folder, default to desktop
-            return POSIX path of (path to desktop)
-        end try
-    end tell
-    ]]
-    local ok, result = hs.osascript.applescript(script)
-    if ok then
-        return result
-    else
-        return nil
-    end
-end
-
 -- Open in Ghostty terminal
 function M.openInTerminal()
-    local path = getFinderPath()
+    local path = Finder.getPath()
     if path then
-        path = path:gsub("^%s*(.-)%s*$", "%1")
-        print("Opening terminal path: " .. path)
-        hs.execute("open -a Ghostty " .. shellQuote(path))
-        
+        log.info('Opened terminal', { path = path })
+        hs.execute("open -a Ghostty " .. Finder.shellQuote(path))
+
         EventBus.emit(EventBus.EVENTS.CUSTOM .. 'terminal.opened', {
             path = path,
             app = 'Ghostty'
         })
-        
-        log.info('Opened terminal', { path = path })
     else
         hs.alert.show("Unable to get Finder path")
         log.error('Failed to get Finder path')
@@ -68,30 +36,24 @@ end
 
 -- Open in VS Code
 function M.openInVSCode()
-    local path = getFinderPath()
+    local path = Finder.getPath()
     if path then
-        path = path:gsub("^%s*(.-)%s*$", "%1")
-        print("Opening VS Code path: " .. path)
-
-        -- Check if VS Code is installed
         local appPath = "/Applications/Visual Studio Code.app"
-        local result = hs.execute("test -d " .. shellQuote(appPath) .. " && echo 'exists'")
+        local result = hs.execute("test -d " .. Finder.shellQuote(appPath) .. " && echo 'exists'")
 
         if result and result:match("exists") then
-            -- Use code command if code CLI is installed
             local codeResult = hs.execute("which code 2>/dev/null")
             if codeResult and codeResult:len() > 0 then
-                hs.execute("code " .. shellQuote(path))
+                hs.execute("code " .. Finder.shellQuote(path))
             else
-                -- Use open command
-                hs.execute("open -a 'Visual Studio Code' " .. shellQuote(path))
+                hs.execute("open -a 'Visual Studio Code' " .. Finder.shellQuote(path))
             end
-            
+
             EventBus.emit(EventBus.EVENTS.CUSTOM .. 'vscode.opened', {
                 path = path,
                 app = 'VSCode'
             })
-            
+
             log.info('Opened VS Code', { path = path })
         else
             hs.alert.show("Visual Studio Code not found")
@@ -112,9 +74,9 @@ end
 local function start()
     log.debug('Starting finder integration')
 
-    -- Bind hotkeys
-    terminalHotkey = hs.hotkey.bind({'cmd', 'ctrl', 'alt'}, 'T', M.openInTerminal)
-    vscodeHotkey = hs.hotkey.bind({'cmd', 'ctrl', 'alt'}, 'V', M.openInVSCode)
+    -- Bind hotkeys using Hyper (Cmd+Alt+Ctrl+Shift)
+    terminalHotkey = hs.hotkey.bind({'cmd', 'alt', 'ctrl', 'shift'}, 'F', M.openInTerminal)
+    vscodeHotkey = hs.hotkey.bind({'cmd', 'alt', 'ctrl', 'shift'}, 'V', M.openInVSCode)
 
     return true
 end

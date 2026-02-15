@@ -1,6 +1,6 @@
 -- **************************************************
 -- Simple Vim-style window manager
--- Prefix key: Option + R to enter management mode
+-- Prefix key: Hyper + R to enter management mode (Hyper = Cmd+Opt+Ctrl+Shift)
 -- Mode key bindings:
 --   h / l / j / k : Left/Right/Bottom/Top half screen
 --   y / u / i / o : Top-left/Bottom-left/Top-right/Bottom-right quarter
@@ -16,7 +16,8 @@ local Logger = require('modules.core.logger')
 local log = Logger.new('WindowManager')
 
 -- Create window management modal
-local windowModal = hs.hotkey.modal.new({'alt'}, 'r')
+-- Using Hyper (Cmd+Opt+Ctrl+Shift) + R
+local windowModal = hs.hotkey.modal.new({'cmd', 'alt', 'ctrl', 'shift'}, 'r')
 
 -- Help display timer
 local helpTimer = nil

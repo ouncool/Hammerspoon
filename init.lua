@@ -15,7 +15,22 @@ Logger.setDestination('notification', true)
 
 local log = Logger.new('Init')
 
--- Hotkey to reload configuration
+-- ==================================================
+-- Hyper Key Setup: Caps Lock → Cmd + Opt + Ctrl + Shift
+-- ==================================================
+-- Disable Caps Lock functionality and remap to Hyper key
+hs.hotkey.bind({}, 'F18', function()
+  -- Empty function - Caps Lock acts as a modifier now
+end)
+
+-- Configure Caps Lock as Hyper Key modifier
+-- Note: Use Karabiner-Elements or native macOS settings to map:
+-- Caps Lock (key code 0) → Hyper Key (Cmd + Opt + Ctrl + Shift)
+-- 
+-- In Karabiner-Elements:
+-- Add rule: caps_lock → left_command + left_option + left_control + left_shift
+
+-- Hotkey to reload configuration: Cmd+Opt+Ctrl+R (still available)
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "R", function()
   hs.reload()
 end)
@@ -128,6 +143,11 @@ loadModule('modules.window.manager', {
   autoStart = true
 })
 
+loadModule('modules.window.app-switcher', {
+  dependencies = {},
+  autoStart = true
+})
+
 -- --------------------------------------------------
 -- Keyboard Enhancement
 -- --------------------------------------------------
@@ -139,6 +159,11 @@ loadModule('modules.keyboard.paste-helper', {
 -- --------------------------------------------------
 -- Application Integration
 -- --------------------------------------------------
+loadModule('modules.integration.hyper-key', {
+  dependencies = {},
+  autoStart = true
+})
+
 loadModule('modules.integration.finder-terminal', {
   dependencies = {},
   autoStart = true
