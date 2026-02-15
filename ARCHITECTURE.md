@@ -807,6 +807,74 @@ end
 
 ---
 
+## Hyper Key Integration
+
+### Overview
+
+The configuration uses **Hyper Key** (Caps Lock mapped to `Cmd + Alt + Ctrl + Shift`) for global shortcuts. This provides a non-conflicting, comfortable keybinding scheme.
+
+### Module: Hyper Key (`modules/integration/hyper-key.lua`)
+
+Manages all Hyper Key shortcuts for common tasks:
+
+```lua
+local hyperModifier = {'cmd', 'alt', 'ctrl', 'shift'}
+
+-- Hyper + G: Open browser
+hs.hotkey.bind(hyperModifier, 'G', openBrowser)
+
+-- Hyper + T: Open terminal
+hs.hotkey.bind(hyperModifier, 'T', openTerminal)
+
+-- Hyper + F: Open Finder directory in terminal
+hs.hotkey.bind(hyperModifier, 'F', openFinderInTerminal)
+
+-- Hyper + V: Open Finder directory in VS Code
+hs.hotkey.bind(hyperModifier, 'V', openFinderInVSCode)
+```
+
+### Supported Shortcuts
+
+| Key | Action | Module |
+|-----|--------|--------|
+| `Hyper + G` | Open browser | hyper-key.lua |
+| `Hyper + T` | Open terminal | hyper-key.lua |
+| `Hyper + F` | Finder → Terminal | hyper-key.lua |
+| `Hyper + V` | Finder → VS Code | hyper-key.lua |
+| `Hyper + R` | Window manager | manager.lua |
+
+### Hyper Key Setup
+
+To use Hyper Key, you must remap Caps Lock using Karabiner-Elements:
+
+1. Install [Karabiner-Elements](https://karabiner-elements.pqrs.org/)
+2. Add rule: `caps_lock → left_command + left_option + left_control + left_shift`
+3. Enable the rule
+
+See [HYPER_KEY.md](HYPER_KEY.md) for detailed setup instructions.
+
+### Adding New Hyper Shortcuts
+
+1. Edit `modules/integration/hyper-key.lua`
+2. Add a new function
+3. Bind it in the `start()` function:
+
+```lua
+local function myNewFunction()
+  log.info('My new action')
+  -- Your code here
+end
+
+-- In start()
+hotkeyBindings.myAction = hs.hotkey.bind(hyperModifier, 'X', myNewFunction)
+```
+
+---
+
+## Best Practices
+
+---
+
 ## Performance Metrics
 
 ### Before Optimization
