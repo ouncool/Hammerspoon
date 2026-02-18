@@ -1,193 +1,133 @@
--- **************************************************
--- Hammerspoon Main Configuration Entry
--- **************************************************
+-- Hammerspoon bootstrap entrypoint (refactored architecture)
 
--- Load core systems first
-local Logger = require('modules.core.logger')
-local EventBus = require('modules.core.event-bus')
-local Lifecycle = require('modules.core.lifecycle')
-local Validator = require('modules.core.validator')
+local Logger = require('core.logger')
+local Events = require('core.events')
+local Config = require('core.config')
+local Lifecycle = require('core.lifecycle')
+local Hotkeys = require('infra.hotkey-registry')
+local CommandRunner = require('infra.command-runner')
 
--- Configure logger
-Logger.setLevel('INFO')
-Logger.setDestination('console', true)
-Logger.setDestination('notification', true)
+local InputMethod = require('features.input-method.auto-switch')
+local WindowManager = require('features.window.manager')
+local AppSwitcher = require('features.switcher.app-switcher')
+local PasteHelper = require('features.clipboard.paste-helper')
+local FinderActions = require('features.integration.finder-actions')
+local HyperShortcuts = require('features.hyper.shortcuts')
+local PreviewPdf = require('features.integration.pdf-fullscreen')
 
-local log = Logger.new('Init')
+local ok, errors = Config.reload()
+if not ok then
+  print('[Config] invalid config, using defaults')
+  for _, err in ipairs(errors or {}) do
+    print('  - ' .. tostring(err))
+  end
+end
 
--- ==================================================
--- Hyper Key Setup: Caps Lock → Cmd + Opt + Ctrl + Shift
--- ==================================================
--- Disable Caps Lock functionality and remap to Hyper key
+local config = Config.get()
+Logger.configure(config.logging)
+
+local log = Logger.scope('Init')
+
+-- Keep F18 available as a no-op key for Hyper mapping tools.
 hs.hotkey.bind({}, 'F18', function()
-  -- Empty function - Caps Lock acts as a modifier now
 end)
 
--- Configure Caps Lock as Hyper Key modifier
--- Note: Use Karabiner-Elements or native macOS settings to map:
--- Caps Lock (key code 0) → Hyper Key (Cmd + Opt + Ctrl + Shift)
--- 
--- In Karabiner-Elements:
--- Add rule: caps_lock → left_command + left_option + left_control + left_shift
-
--- Hotkey to reload configuration: Cmd+Opt+Ctrl+R (still available)
-hs.hotkey.bind({"cmd", "alt", "ctrl"}, "R", function()
-  hs.reload()
-end)
-
--- Load and validate configuration
-local config = require('modules.utils.config')
-local validConfig = Validator.mergeWithDefaults(config)
-
-if not Validator.validateAndReport(validConfig) then
-  log.warn('Configuration validation failed, using defaults')
-end
-
--- Apply logging configuration from config
-if validConfig.logging then
-  if validConfig.logging.level then
-    Logger.setLevel(validConfig.logging.level)
-  end
-  if validConfig.logging.file ~= nil then
-    Logger.setDestination('file', validConfig.logging.file)
-  end
-  if validConfig.logging.console ~= nil then
-    Logger.setDestination('console', validConfig.logging.console)
-  end
-  if validConfig.logging.notification ~= nil then
-    Logger.setDestination('notification', validConfig.logging.notification)
-  end
-end
-
--- Helper function: Safely load module with lifecycle management
-local function loadModule(name, options)
-  options = options or {}
-  
-  if not name or type(name) ~= 'string' then
-    log.error('Invalid module name: ' .. tostring(name))
-    return nil
-  end
-  
-  local ok, result = pcall(require, name)
-  
-  if not ok then
-    log.error('Failed to load module: ' .. name, { error = result })
-    hs.notify.new({
-      title = "Hammerspoon",
-      informativeText = "Failed to load module: " .. name .. "\n" .. tostring(result)
-    }):send()
-    return nil
-  end
-  
-  -- Register with lifecycle manager
-  Lifecycle.register(name, result, options.dependencies)
-  
-  -- Initialize module
-  if options.autoInit ~= false then
-    if not Lifecycle.init(name) then
-      log.warn('Module initialization failed: ' .. name)
-      return result
-    end
-  end
-  
-  -- Start module
-  if options.autoStart ~= false then
-    if not Lifecycle.start(name) then
-      log.warn('Module start failed: ' .. name)
-      return result
-    end
-  end
-  
-  return result
-end
-
--- ==================================================
--- Core System Events
--- ==================================================
-
--- Emit config reloaded event
-EventBus.emit(EventBus.EVENTS.CONFIG_RELOADED, {
-  config = validConfig,
-  timestamp = hs.timer.absoluteTime()
+-- Global reload hotkey.
+Hotkeys.bind({
+  id = 'global.reload',
+  group = 'global',
+  mods = config.hotkeys.reload.mods,
+  key = config.hotkeys.reload.key,
+  desc = 'Reload Hammerspoon config',
+  action = function()
+    hs.reload()
+  end,
 })
 
--- Watch for screen changes
-hs.screen.watcher.new(function()
-  EventBus.emit(EventBus.EVENTS.SCREEN_CHANGED, {
+local context = {
+  config = config,
+  logger = Logger,
+  events = Events,
+  hotkeys = Hotkeys,
+  command = CommandRunner,
+}
+
+Lifecycle.setContext(context)
+
+Lifecycle.register({
+  id = 'feature.inputMethod',
+  module = InputMethod,
+})
+
+Lifecycle.register({
+  id = 'feature.windowManager',
+  module = WindowManager,
+})
+
+Lifecycle.register({
+  id = 'feature.appSwitcher',
+  module = AppSwitcher,
+})
+
+Lifecycle.register({
+  id = 'feature.pasteHelper',
+  module = PasteHelper,
+})
+
+Lifecycle.register({
+  id = 'feature.finderActions',
+  module = FinderActions,
+})
+
+Lifecycle.register({
+  id = 'feature.hyperShortcuts',
+  module = HyperShortcuts,
+  deps = {'feature.finderActions'},
+})
+
+Lifecycle.register({
+  id = 'feature.previewPdf',
+  module = PreviewPdf,
+})
+
+local startupOk = Lifecycle.startAll()
+if not startupOk then
+  hs.alert.show('Hammerspoon startup failed. Check logs.', 3)
+else
+  hs.alert.show('Hammerspoon config loaded', 1)
+end
+
+Events.emit(Events.NAMES.CONFIG_RELOADED, {
+  timestamp = hs.timer.absoluteTime(),
+})
+
+local screenWatcher = hs.screen.watcher.new(function()
+  Events.emit(Events.NAMES.SCREEN_CHANGED, {
+    timestamp = hs.timer.absoluteTime(),
     screens = hs.screen.allScreens(),
-    timestamp = hs.timer.absoluteTime()
   })
-end):start()
+end)
+screenWatcher:start()
 
--- ==================================================
--- Module Loading
--- ==================================================
+local started = Lifecycle.startedModules()
+log.info('Started modules', {count = #started, modules = started})
 
--- --------------------------------------------------
--- Input Method Related
--- --------------------------------------------------
-loadModule('modules.input-method.auto-switch', {
-  dependencies = {},
-  autoStart = true
-})
--- loadModule('modules.input-method.indicator', {
---   dependencies = {'modules.input-method.auto-switch'},
---   autoStart = false  -- Disabled by default
--- })
-
--- --------------------------------------------------
--- Window Management
--- --------------------------------------------------
-loadModule('modules.window.manager', {
-  dependencies = {},
-  autoStart = true
-})
-
-loadModule('modules.window.app-switcher', {
-  dependencies = {},
-  autoStart = true
-})
-
--- --------------------------------------------------
--- Keyboard Enhancement
--- --------------------------------------------------
-loadModule('modules.keyboard.paste-helper', {
-  dependencies = {},
-  autoStart = true
-})
-
--- --------------------------------------------------
--- Application Integration
--- --------------------------------------------------
-loadModule('modules.integration.hyper-key', {
-  dependencies = {},
-  autoStart = true
-})
-
-loadModule('modules.integration.finder-terminal', {
-  dependencies = {},
-  autoStart = true
-})
-
-loadModule('modules.integration.preview-pdf-fullscreen', {
-  dependencies = {},
-  autoStart = true
-})
-
--- ==================================================
--- System Ready
--- ==================================================
-
--- 简洁的启动信息（只在有错误时显示详细统计）
-Lifecycle.printStatus()
-Lifecycle.printHotkeys()
-
--- 只在有错误时显示统计信息
-local stats = Logger.getStats()
-if stats.error > 0 or stats.fatal > 0 then
-  EventBus.printStats()
-  Logger.printStats()
+local failed = Lifecycle.failedModules()
+if #failed > 0 then
+  log.error('Failed modules', {failed = failed})
 end
 
--- Configuration loaded
-hs.alert.show("✅ Hammerspoon 配置已加载")
+local function printHotkeys()
+  local list = Hotkeys.list()
+  if #list == 0 then
+    return
+  end
+
+  print('Active hotkeys:')
+  for _, item in ipairs(list) do
+    local mods = table.concat(item.mods, '+')
+    print(string.format('  %s: %s+%s (%s)', item.id, mods, item.key, item.group or 'none'))
+  end
+end
+
+printHotkeys()
