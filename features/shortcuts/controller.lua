@@ -3,6 +3,7 @@ local AppLauncher = require('features.shortcuts.app-launcher')
 local Clipboard = require('features.interaction.clipboard')
 local FinderActions = require('features.interaction.finder-actions')
 local WindowOps = require('features.window.operations')
+local HelpDisplay = require('features.shortcuts.help-display')
 
 local M = {}
 
@@ -16,6 +17,7 @@ function M.setup(runtime)
   windowOps = WindowOps.new(ctx)
   AppLauncher.setup(runtime)
   Clipboard.setup(runtime)
+  HelpDisplay.setup(runtime)
   return true
 end
 
@@ -116,6 +118,12 @@ end
 -- Hyperkey + Return: Maximize window
 local function windowMaximize()
   windowOps.maximize()
+end
+
+-- Hyperkey + H: Show help panel
+local function showHelp()
+  log.info('Showing help panel')
+  HelpDisplay.show()
 end
 
 function M.start()
@@ -241,7 +249,17 @@ function M.start()
     action = windowMaximize,
   })
 
-  log.info('Hyperkey controller started with 12 hotkeys bound')
+  -- Hyperkey + H: Show help panel
+  ctx.hotkeys.bind({
+    id = 'hyperkey.help',
+    group = 'hyperkey',
+    mods = mods,
+    key = 'H',
+    desc = 'Show help panel with all hotkeys',
+    action = showHelp,
+  })
+
+  log.info('Hyperkey controller started with 13 hotkeys bound')
   return true
 end
 
