@@ -6,8 +6,23 @@ local log = Logger.scope('Lifecycle')
 local registry = {}
 local order = {}
 local context = {}
+local safeCall
 
-local function safeCall(moduleId, fnName, fn, ...)
+local function stopEntry(id, entry)
+  if entry and entry.started and type(entry.module.stop) == 'function' then
+    local stopOk, stopErr = safeCall(id, 'stop', entry.module.stop)
+    if not stopOk then
+      log.error('Stop failed', {id = id, error = stopErr})
+    end
+  end
+  if entry then
+    entry.started = false
+    -- Reset setup state so a subsequent startAll() performs full re-initialization.
+    entry.setupDone = false
+  end
+end
+
+safeCall = function(moduleId, fnName, fn, ...)
   local ok, result, err = pcall(fn, ...)
   if not ok then
     return false, string.format('%s.%s panicked: %s', moduleId, fnName, tostring(result))
@@ -103,6 +118,7 @@ function Lifecycle.startAll()
   end
 
   order = result
+  local startedThisRun = {}
 
   for _, id in ipairs(order) do
     local entry = registry[id]
@@ -113,6 +129,10 @@ function Lifecycle.startAll()
         if not setupOk then
           entry.failed = true
           entry.error = setupErr
+          for i = #startedThisRun, 1, -1 do
+            local startedId = startedThisRun[i]
+            stopEntry(startedId, registry[startedId])
+          end
           log.error('Setup failed', {id = id, error = setupErr})
           return false
         end
@@ -124,12 +144,17 @@ function Lifecycle.startAll()
         if not startOk then
           entry.failed = true
           entry.error = startErr
+          for i = #startedThisRun, 1, -1 do
+            local startedId = startedThisRun[i]
+            stopEntry(startedId, registry[startedId])
+          end
           log.error('Start failed', {id = id, error = startErr})
           return false
         end
       end
 
       entry.started = true
+      table.insert(startedThisRun, id)
       entry.failed = false
       entry.error = nil
       log.info('Started module', {id = id})
@@ -151,15 +176,7 @@ function Lifecycle.stopAll()
   for i = #order, 1, -1 do
     local id = order[i]
     local entry = registry[id]
-    if entry and entry.started and type(entry.module.stop) == 'function' then
-      local stopOk, stopErr = safeCall(id, 'stop', entry.module.stop)
-      if not stopOk then
-        log.error('Stop failed', {id = id, error = stopErr})
-      end
-    end
-    if entry then
-      entry.started = false
-    end
+    stopEntry(id, entry)
   end
 
   return true

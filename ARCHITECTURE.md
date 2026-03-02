@@ -9,7 +9,7 @@ The system is split into four layers:
 3. `shared`: stateless utility helpers
 4. `features`: end-user functionality modules
 
-No compatibility shims are kept for the previous `modules/*` architecture.
+No compatibility shims are kept for the previous `modules/*` architecture, except a temporary config-key migration for removed legacy keys.
 
 ## Core
 
@@ -96,13 +96,11 @@ Application discovery/open helpers.
 
 - `shared/timing.lua`: `debounce`, `throttle`
 - `shared/finder.lua`: Finder current path and shell quoting
-- `shared/animation.lua`: easing helper
-
 ## Features
 
 ### Input Method
 
-`features/input-method/auto-switch.lua`
+`features/automation/auto-switch.lua`
 
 - Watches app activation
 - Maps app to target input source
@@ -113,37 +111,30 @@ Application discovery/open helpers.
 - `features/window/operations.lua`: geometry actions
 - `features/window/manager.lua`: modal UI and key mapping
 
-### App Switcher
-
-`features/switcher/app-switcher.lua`
-
-- Chooser-based app switching
-- Hotkeys via registry
-
 ### Finder Integration
 
-`features/integration/finder-actions.lua`
+`features/interaction/finder-actions.lua`
 
 - Reusable actions only (no direct hotkey binding)
 - Open Finder path in terminal/editor
 
 ### Hyper Shortcuts
 
-`features/hyper/shortcuts.lua`
+`features/shortcuts/controller.lua`
 
 - Single hotkey entrypoint for Hyper shortcuts
 - Depends on `finder-actions`
 
 ### PDF Fullscreen
 
-`features/integration/pdf-fullscreen.lua`
+`features/interaction/pdf-fullscreen.lua`
 
 - Monitors Preview windows
 - Fullscreens PDF windows with debounce
 
 ### Paste Helper
 
-`features/clipboard/paste-helper.lua`
+`features/interaction/clipboard.lua`
 
 - Synthetic keystroke paste (`Cmd+Shift+V`)
 
@@ -164,6 +155,5 @@ Application discovery/open helpers.
   - Hyper shortcuts
   - Window mode
   - Input method switch
-  - App switcher
   - Finder open actions
   - Preview PDF fullscreen

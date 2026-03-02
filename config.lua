@@ -17,20 +17,6 @@ config.hotkeys = {
   windowMode = {
     key = 'R',
   },
-  appSwitcher = {
-    next = {mods = {'alt'}, key = 'tab'},
-    previous = {mods = {'alt', 'shift'}, key = 'tab'},
-  },
-  pasteHelper = {
-    mods = {'cmd', 'shift'},
-    key = 'V',
-  },
-  hyper = {
-    browser = 'G',
-    terminal = 'T',
-    finderTerminal = 'F',
-    finderEditor = 'V',
-  },
 }
 
 config.inputMethod = {
@@ -48,25 +34,6 @@ config.inputMethod = {
 
 config.window = {
   twoThirdRatio = 2 / 3,
-}
-
-config.appSwitcher = {
-  scope = 'allSpaces',
-  width = 0.4,
-  numRows = 8,
-  textSize = 16,
-  subTextSize = 12,
-  includeNoWindowBundleIds = {
-    'com.tencent.flue.WeChatAppEx',
-    'com.tencent.xinWeChat',
-    'com.tencent.WeWorkMac',
-  },
-  bgColor = {red = 0.1, green = 0.1, blue = 0.1, alpha = 0.95},
-  textColor = {red = 1, green = 1, blue = 1, alpha = 1},
-  subTextColor = {red = 0.7, green = 0.7, blue = 0.7, alpha = 1},
-  selectedColor = {red = 0.3, green = 0.5, blue = 1, alpha = 0.3},
-  shadow = true,
-  radius = 10,
 }
 
 config.apps = {

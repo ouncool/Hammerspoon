@@ -169,6 +169,55 @@ local function loadUserConfig()
   return userConfig, nil
 end
 
+local function sanitizeLegacyConfig(userConfig)
+  if type(userConfig) ~= 'table' then
+    return userConfig, {}
+  end
+
+  local sanitized = deepCopy(userConfig)
+  local warnings = {}
+
+  local function drop(path, apply)
+    if apply() then
+      table.insert(warnings, string.format('Legacy config key removed: %s', path))
+    end
+  end
+
+  drop('config.appSwitcher', function()
+    if sanitized.appSwitcher ~= nil then
+      sanitized.appSwitcher = nil
+      return true
+    end
+    return false
+  end)
+
+  drop('config.hotkeys.appSwitcher', function()
+    if type(sanitized.hotkeys) == 'table' and sanitized.hotkeys.appSwitcher ~= nil then
+      sanitized.hotkeys.appSwitcher = nil
+      return true
+    end
+    return false
+  end)
+
+  drop('config.hotkeys.hyper', function()
+    if type(sanitized.hotkeys) == 'table' and sanitized.hotkeys.hyper ~= nil then
+      sanitized.hotkeys.hyper = nil
+      return true
+    end
+    return false
+  end)
+
+  drop('config.hotkeys.pasteHelper', function()
+    if type(sanitized.hotkeys) == 'table' and sanitized.hotkeys.pasteHelper ~= nil then
+      sanitized.hotkeys.pasteHelper = nil
+      return true
+    end
+    return false
+  end)
+
+  return sanitized, warnings
+end
+
 function Config.reload()
   local userConfig, loadErr = loadUserConfig()
   if userConfig == nil then
@@ -176,7 +225,12 @@ function Config.reload()
     return false, {loadErr}
   end
 
-  local merged = deepMerge(defaults, userConfig)
+  local sanitizedConfig, warnings = sanitizeLegacyConfig(userConfig)
+  for _, warning in ipairs(warnings) do
+    log.warn(warning)
+  end
+
+  local merged = deepMerge(defaults, sanitizedConfig)
   local ok, errors = validate(merged)
   if not ok then
     snapshot = deepCopy(defaults)

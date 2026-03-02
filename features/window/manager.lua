@@ -53,7 +53,7 @@ local function showHud(title, lines, secs)
     textSize = 20,
     textColor = {white = 1, alpha = 1},
     frame = {x = padding, y = padding/2, w = w - padding*2, h = titleHeight},
-    paragraphStyle = {alignment = 'left'},
+    textAlignment = 'left',
   }
 
   for i, ln in ipairs(lines) do
@@ -64,7 +64,7 @@ local function showHud(title, lines, secs)
       textSize = 16,
       textColor = {white = 1, alpha = 0.95},
       frame = {x = padding, y = padding/2 + titleHeight + (i - 1) * lineHeight, w = w - padding*2, h = lineHeight},
-      paragraphStyle = {alignment = 'left'},
+      textAlignment = 'left',
     }
   end
 

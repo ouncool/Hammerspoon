@@ -16,9 +16,9 @@
   - `command-runner.lua`: 系统命令统一执行
   - `app-discovery.lua`: 应用发现与打开能力
 - `shared/`: 纯工具
-  - 防抖节流、Finder 路径、动画等
+  - 防抖节流、Finder 路径
 - `features/`: 业务功能
-  - `shortcuts/`: Hyperkey 统一快捷键 + 应用切换器
+  - `shortcuts/`: Hyperkey 统一快捷键
   - `automation/`: 输入法自动切换
   - `interaction/`: Finder 操作、PDF 全屏、剪贴板粘贴
   - `window/`: 窗口管理和操作
@@ -44,16 +44,10 @@
 - 创建 `core/schema.lua`，集中管理配置 Schema 和默认值（253 行）
 - 原 core/config.lua 从 505 行降至 ~150 行，职责更清晰
 
-**P2.2 - 应用切换器重构**
-- app-switcher.lua（691 行）拆分为 3 个专职模块：
-  - `filters.lua`（299 行）：应用过滤规则
-  - `ui.lua`（111 行）：Chooser UI 配置
-  - `app-switcher.lua`（235 行）：核心业务逻辑
-
 **P3 - 功能域重组**
 - 将 5 个杂乱目录重构为 4 个清晰的功能域：
   - `window/` - 窗口操作
-  - `shortcuts/` - 快捷键绑定（Hyperkey + App Switcher）
+  - `shortcuts/` - 快捷键绑定（Hyperkey）
   - `automation/` - 自动化（输入法切换）
   - `interaction/` - 系统交互（Finder、剪贴板、PDF）
 
@@ -71,7 +65,6 @@
 
 ### 全局快捷键
 - `Cmd+Alt+Ctrl+R`: 重新加载配置
-- `Alt+Tab / Alt+Shift+Tab`: 应用切换器
 
 ### Hyperkey 快捷键集 (Cmd+Alt+Ctrl+Shift)
 
@@ -118,11 +111,9 @@
     │   ├── manager.lua
     │   └── operations.lua
     ├── shortcuts/                    # Hyperkey 快捷键
-    │   ├── controller.lua            # 12 个 Hyperkey 绑定
+    │   ├── controller.lua            # 13 个 Hyperkey 绑定
     │   ├── app-launcher.lua          # 应用启动/切换
-    │   ├── app-switcher.lua          # 应用切换器主逻辑
-    │   ├── filters.lua               # App 过滤规则
-    │   └── ui.lua                    # Chooser UI 配置
+    │   └── help-display.lua          # Hyperkey 帮助面板
     ├── automation/                   # 自动化功能
     │   └── auto-switch.lua           # 输入法自动切换
     └── interaction/                  # 系统交互
@@ -137,17 +128,13 @@
 
 默认假设你已将 Caps Lock 映射为 Hyper（`cmd+alt+ctrl+shift`）。
 
-### 2) Hammerspoon 版本差异
-
-`hs.chooser` 的部分方法在不同版本可用性不同。当前代码已对 `rows/numRows`、`font` 等做方法探测调用，避免直接崩溃。
-
-### 3) App Switcher 过滤策略
-
-为避免出现大量系统后台进程，切换器默认过滤 `xpc/service/agent/helper` 类条目，并仅对白名单中的“无窗口应用”做运行态补充。
-
-### 4) 权限
+### 2) 权限
 
 涉及输入法切换、窗口操作、模拟按键时，macOS 需要辅助功能权限。
+
+### 3) 旧配置兼容迁移
+
+启动时会自动移除已废弃字段并输出 `WARN`（`appSwitcher`、`hotkeys.appSwitcher`、`hotkeys.hyper`、`hotkeys.pasteHelper`），避免旧配置导致校验失败。
 
 ## 可自行修改的配置条目
 
@@ -163,7 +150,6 @@
 
 - `reload`: 重载配置的快捷键（默认 `Cmd+Alt+Ctrl+R`）
 - `hyperMods`: Hyperkey 修饰键集合（默认 `cmd+alt+ctrl+shift`）
-- `appSwitcher.next/previous`: App 切换器快捷键（默认 `Alt+Tab / Alt+Shift+Tab`）
 
 ### `inputMethod`
 
@@ -174,16 +160,6 @@
 ### `window`
 
 - `twoThirdRatio`: `H/L` 操作时的宽度比例
-
-### `appSwitcher`
-
-- `scope`: `allSpaces | currentSpace`
-- `width`: 窗口宽度（支持 `0~1` 或百分比数值）
-- `numRows`: 显示行数
-- `textSize/subTextSize`: 文本字号
-- `bgColor/textColor/subTextColor/selectedColor`: 颜色
-- `shadow/radius`: 样式
-- `includeNoWindowBundleIds`: 无窗口但需要在 Alt+Tab 中保留的 bundle id 白名单
 
 ### `apps`
 
@@ -200,27 +176,7 @@
 
 ## 常见自定义示例
 
-### 例1: 让微信/企业微信在无窗口时仍出现在 Alt+Tab
-
-在 `config.lua` 中设置:
-
-```lua
-config.appSwitcher.includeNoWindowBundleIds = {
-  'com.tencent.flue.WeChatAppEx',
-  'com.tencent.WeWorkMac',
-}
-```
-
-### 例2: 改应用切换快捷键（示例改为 Hyper+E / Hyper+Q）
-
-```lua
-config.hotkeys.appSwitcher = {
-  next = { mods = {'cmd','alt','ctrl','shift'}, key = 'e' },
-  previous = { mods = {'cmd','alt','ctrl','shift'}, key = 'q' },
-}
-```
-
-### 例3: 提升日志详细程度
+### 例1: 提升日志详细程度
 
 ```lua
 config.logging.level = 'DEBUG'
@@ -234,7 +190,6 @@ config.logging.level = 'DEBUG'
    - "Failed modules: ..." 表示存在失败模块
 3. 若某功能无效，根据日志前缀追踪：
    - `HyperkeyController` - Hyperkey 快捷键
-   - `AppSwitcher` - Alt+Tab 应用切换
    - `InputMethod` - 输入法自动切换
    - `WindowManager` - 窗口管理
    - `PreviewPdf` - PDF 自动全屏

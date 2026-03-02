@@ -8,6 +8,26 @@ local log = nil
 local hud = nil
 local hudTimer = nil
 
+local HYPERKEY_CN_DESC = {
+  ['hyperkey.lock'] = '锁屏',
+  ['hyperkey.paste'] = '强制粘贴',
+  ['hyperkey.terminal'] = '打开终端',
+  ['hyperkey.editor'] = '打开编辑器',
+  ['hyperkey.browser'] = '打开浏览器',
+  ['hyperkey.wechat'] = '打开微信',
+  ['hyperkey.weworkMac'] = '打开企业微信',
+  ['hyperkey.window.left'] = '窗口左半屏',
+  ['hyperkey.window.right'] = '窗口右半屏',
+  ['hyperkey.window.up'] = '窗口上半屏',
+  ['hyperkey.window.down'] = '窗口下半屏',
+  ['hyperkey.window.maximize'] = '窗口最大化',
+  ['hyperkey.help'] = '显示帮助面板',
+}
+
+local GLOBAL_CN_DESC = {
+  ['global.reload'] = '重新加载配置',
+}
+
 function M.setup(runtime)
   ctx = runtime
   log = ctx.logger.scope('HelpDisplay')
@@ -59,17 +79,28 @@ local function keyToString(key)
 end
 
 local function formatHotkey(binding)
+  if binding.group == 'hyperkey' then
+    local key = keyToString(binding.key)
+    local desc = HYPERKEY_CN_DESC[binding.id] or (binding.desc or binding.id)
+    return 'Hyperkey + ' .. key .. '    ' .. desc
+  end
+
+  if binding.group == 'global' then
+    local mods = modsToString(binding.mods)
+    local key = keyToString(binding.key)
+    local desc = GLOBAL_CN_DESC[binding.id] or (binding.desc or binding.id)
+    return mods .. ' + ' .. key .. '    ' .. desc
+  end
+
   local mods = modsToString(binding.mods)
   local key = keyToString(binding.key)
-  local shortcut = mods .. key
   local desc = binding.desc or binding.id
-  -- Add spacing between shortcut and description
-  return shortcut .. '    ' .. desc
+  return mods .. key .. '    ' .. desc
 end
 
 local function groupHotkeys(hotkeys)
   local grouped = {}
-  local groupOrder = {'global', 'hyperkey', 'switcher', 'other'}
+  local groupOrder = {'global', 'hyperkey', 'other'}
 
   for _, binding in ipairs(hotkeys) do
     local group = binding.group or 'other'
@@ -97,7 +128,6 @@ local function buildHelpLines()
   local groupLabels = {
     global = '📌 全局快捷键',
     hyperkey = '🔥 超级键 (Cmd+Alt+Ctrl+Shift)',
-    switcher = '🔄 应用切换',
     other = '⚙️ 其他功能',
   }
 
@@ -170,14 +200,14 @@ function M.show()
     textSize = 22,
     textColor = {white = 1, alpha = 1},
     frame = {x = padding, y = padding / 2, w = w - padding * 2, h = titleHeight},
-    paragraphStyle = {alignment = 'left'},
+    textAlignment = 'left',
   }
 
   -- Hotkey lines
   for i, line in ipairs(lines) do
     if line == '' then
       -- Skip blank lines, just add spacing
-    elseif line:find('📌') or line:find('🔥') or line:find('🔄') or line:find('⚙️') then
+    elseif line:find('📌') or line:find('🔥') or line:find('⚙️') then
       -- Section headers
       hud[#hud + 1] = {
         type = 'text',
@@ -191,7 +221,7 @@ function M.show()
           w = w - padding * 2,
           h = lineHeight,
         },
-        paragraphStyle = {alignment = 'left'},
+        textAlignment = 'left',
       }
     else
       -- Regular hotkey lines
@@ -207,7 +237,7 @@ function M.show()
           w = w - padding * 2,
           h = lineHeight,
         },
-        paragraphStyle = {alignment = 'left'},
+        textAlignment = 'left',
       }
     end
   end

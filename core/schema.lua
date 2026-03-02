@@ -16,20 +16,6 @@ Schema.defaults = {
     windowMode = {
       key = 'R',
     },
-    appSwitcher = {
-      next = {mods = {'alt'}, key = 'tab'},
-      previous = {mods = {'alt', 'shift'}, key = 'tab'},
-    },
-    pasteHelper = {
-      mods = {'cmd', 'shift'},
-      key = 'V',
-    },
-    hyper = {
-      browser = 'G',
-      terminal = 'T',
-      finderTerminal = 'F',
-      finderEditor = 'V',
-    },
   },
   inputMethod = {
     default = 'com.sogou.inputmethod.sogou.pinyin',
@@ -45,24 +31,6 @@ Schema.defaults = {
   },
   window = {
     twoThirdRatio = 2 / 3,
-  },
-  appSwitcher = {
-    scope = 'allSpaces',
-    width = 0.4,
-    numRows = 8,
-    textSize = 16,
-    subTextSize = 12,
-    includeNoWindowBundleIds = {
-      'com.tencent.flue.WeChatAppEx',
-      'com.tencent.xinWeChat',
-      'com.tencent.WeWorkMac',
-    },
-    bgColor = {red = 0.1, green = 0.1, blue = 0.1, alpha = 0.95},
-    textColor = {red = 1, green = 1, blue = 1, alpha = 1},
-    subTextColor = {red = 0.7, green = 0.7, blue = 0.7, alpha = 1},
-    selectedColor = {red = 0.3, green = 0.5, blue = 1, alpha = 0.3},
-    shadow = true,
-    radius = 10,
   },
   apps = {
     browsers = {
@@ -121,41 +89,6 @@ Schema.definition = {
             key = {type = 'string'},
           },
         },
-        appSwitcher = {
-          type = 'table',
-          fields = {
-            next = {
-              type = 'table',
-              fields = {
-                mods = {type = 'array', items = {type = 'string'}},
-                key = {type = 'string'},
-              },
-            },
-            previous = {
-              type = 'table',
-              fields = {
-                mods = {type = 'array', items = {type = 'string'}},
-                key = {type = 'string'},
-              },
-            },
-          },
-        },
-        pasteHelper = {
-          type = 'table',
-          fields = {
-            mods = {type = 'array', items = {type = 'string'}},
-            key = {type = 'string'},
-          },
-        },
-        hyper = {
-          type = 'table',
-          fields = {
-            browser = {type = 'string'},
-            terminal = {type = 'string'},
-            finderTerminal = {type = 'string'},
-            finderEditor = {type = 'string'},
-          },
-        },
       },
     },
     inputMethod = {
@@ -170,43 +103,6 @@ Schema.definition = {
       type = 'table',
       fields = {
         twoThirdRatio = {type = 'number', min = 0.1, max = 0.9},
-      },
-    },
-    appSwitcher = {
-      type = 'table',
-      fields = {
-        scope = {type = 'string', enum = {'allSpaces', 'currentSpace'}},
-        width = {type = 'number', min = 0.2, max = 0.95},
-        numRows = {type = 'number', min = 3, max = 20},
-        textSize = {type = 'number', min = 10, max = 40},
-        subTextSize = {type = 'number', min = 8, max = 30},
-        includeNoWindowBundleIds = {type = 'array', items = {type = 'string'}},
-        bgColor = {type = 'table', fields = {
-          red = {type = 'number', min = 0, max = 1},
-          green = {type = 'number', min = 0, max = 1},
-          blue = {type = 'number', min = 0, max = 1},
-          alpha = {type = 'number', min = 0, max = 1},
-        }},
-        textColor = {type = 'table', fields = {
-          red = {type = 'number', min = 0, max = 1},
-          green = {type = 'number', min = 0, max = 1},
-          blue = {type = 'number', min = 0, max = 1},
-          alpha = {type = 'number', min = 0, max = 1},
-        }},
-        subTextColor = {type = 'table', fields = {
-          red = {type = 'number', min = 0, max = 1},
-          green = {type = 'number', min = 0, max = 1},
-          blue = {type = 'number', min = 0, max = 1},
-          alpha = {type = 'number', min = 0, max = 1},
-        }},
-        selectedColor = {type = 'table', fields = {
-          red = {type = 'number', min = 0, max = 1},
-          green = {type = 'number', min = 0, max = 1},
-          blue = {type = 'number', min = 0, max = 1},
-          alpha = {type = 'number', min = 0, max = 1},
-        }},
-        shadow = {type = 'boolean'},
-        radius = {type = 'number', min = 0, max = 40},
       },
     },
     apps = {

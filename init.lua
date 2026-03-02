@@ -81,9 +81,12 @@ Lifecycle.register({
 local startupOk = Lifecycle.startAll()
 if not startupOk then
   hs.alert.show('Hammerspoon startup failed. Check logs.', 3)
-else
-  hs.alert.show('Hammerspoon config loaded', 1)
+  local failed = Lifecycle.failedModules()
+  log.error('Startup aborted due to module failure', {failed = failed})
+  return
 end
+
+hs.alert.show('Hammerspoon config loaded', 1)
 
 Events.emit(Events.NAMES.CONFIG_RELOADED, {
   timestamp = hs.timer.absoluteTime(),
@@ -100,11 +103,6 @@ screenWatcher:start()
 local started = Lifecycle.startedModules()
 log.info('Started modules', {count = #started, modules = started})
 
-local failed = Lifecycle.failedModules()
-if #failed > 0 then
-  log.error('Failed modules', {failed = failed})
-end
-
 local function printHotkeys()
   local list = Hotkeys.list()
   if #list == 0 then
@@ -119,34 +117,3 @@ local function printHotkeys()
 end
 
 printHotkeys()
-
-local function modsToString(mods)
-  if not mods then return '' end
-  return table.concat(mods, '+')
-end
-
-local function formatHyperkey(key)
-  -- Format as: Hyperkey + KEY
-  return 'Hyperkey + ' .. key
-end
-
-local function printHelpPanel()
-  print('================ 支持的技能与快捷键（简体中文） ================')
-  
-  print('- 锁屏: 按 ' .. formatHyperkey('L') .. ' 锁定屏幕。')
-  print('- 强制粘贴: 按 ' .. formatHyperkey('V') .. ' 使用粘贴助手忽略剪贴板格式并粘贴。')
-  print('- 终端: 按 ' .. formatHyperkey('T') .. ' 在当前 Finder 路径打开终端。')
-  print('- 编辑器: 按 ' .. formatHyperkey('C') .. ' 在当前 Finder 路径打开 VSCode。')
-  print('- 浏览器: 按 ' .. formatHyperkey('B') .. ' 打开默认浏览器。')
-  print('- 微信: 按 ' .. formatHyperkey('W') .. ' 打开或切换到微信。')
-  print('- 企业微信: 按 ' .. formatHyperkey('Q') .. ' 打开或切换到企业微信。')
-  print('- 窗口管理:')
-  print('  * 按 ' .. formatHyperkey('←') .. ' 调整窗口到屏幕左半边')
-  print('  * 按 ' .. formatHyperkey('→') .. ' 调整窗口到屏幕右半边')
-  print('  * 按 ' .. formatHyperkey('↑') .. ' 调整窗口到屏幕上半部分')
-  print('  * 按 ' .. formatHyperkey('↓') .. ' 调整窗口到屏幕下半部分')
-  print('  * 按 ' .. formatHyperkey('Return') .. ' 最大化窗口')
-  print('===============================================================')
-end
-
-printHelpPanel()
