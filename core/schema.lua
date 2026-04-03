@@ -13,9 +13,6 @@ Schema.defaults = {
       key = 'R',
     },
     hyperMods = {'cmd', 'alt', 'ctrl', 'shift'},
-    windowMode = {
-      key = 'R',
-    },
   },
   inputMethod = {
     default = 'com.sogou.inputmethod.sogou.pinyin',
@@ -28,9 +25,6 @@ Schema.defaults = {
       '/Applications/WebStorm.app',
       '/Applications/Raycast.app',
     },
-  },
-  window = {
-    twoThirdRatio = 2 / 3,
   },
   apps = {
     browsers = {
@@ -59,6 +53,11 @@ Schema.defaults = {
     debounceSec = 0.2,
     fullscreenDelaySec = 0.5,
   },
+  features = {
+    inputMethod = true,
+    hyperkey = true,
+    previewPdf = true,
+  },
 }
 
 Schema.definition = {
@@ -83,12 +82,6 @@ Schema.definition = {
           },
         },
         hyperMods = {type = 'array', items = {type = 'string'}},
-        windowMode = {
-          type = 'table',
-          fields = {
-            key = {type = 'string'},
-          },
-        },
       },
     },
     inputMethod = {
@@ -96,13 +89,8 @@ Schema.definition = {
       fields = {
         default = {type = 'string', pattern = '^[%w%._%-]+$'},
         english = {type = 'string', pattern = '^[%w%._%-]+$'},
+        -- 支持 app 路径（/Applications/Foo.app）或 bundle ID（com.example.foo）
         englishApps = {type = 'array', items = {type = 'string'}},
-      },
-    },
-    window = {
-      type = 'table',
-      fields = {
-        twoThirdRatio = {type = 'number', min = 0.1, max = 0.9},
       },
     },
     apps = {
@@ -131,6 +119,14 @@ Schema.definition = {
         bundleId = {type = 'string'},
         debounceSec = {type = 'number', min = 0.05, max = 3},
         fullscreenDelaySec = {type = 'number', min = 0.05, max = 5},
+      },
+    },
+    features = {
+      type = 'table',
+      fields = {
+        inputMethod = {type = 'boolean'},
+        hyperkey = {type = 'boolean'},
+        previewPdf = {type = 'boolean'},
       },
     },
   },

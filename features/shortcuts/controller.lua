@@ -1,7 +1,8 @@
 -- Unified Hyperkey controller (cmd+alt+ctrl+shift combinations)
+local AppDiscovery = require('infra.app-discovery')
 local AppLauncher = require('features.shortcuts.app-launcher')
 local Clipboard = require('features.interaction.clipboard')
-local FinderActions = require('features.interaction.finder-actions')
+local FinderActionsModule = require('features.interaction.finder-actions')
 local WindowOps = require('features.window.operations')
 local HelpDisplay = require('features.shortcuts.help-display')
 
@@ -10,11 +11,13 @@ local M = {}
 local ctx = nil
 local log = nil
 local windowOps = nil
+local finderActions = nil
 
 function M.setup(runtime)
   ctx = runtime
   log = ctx.logger.scope('HyperkeyController')
   windowOps = WindowOps.new(ctx)
+  finderActions = FinderActionsModule.new(ctx)
   AppLauncher.setup(runtime)
   Clipboard.setup(runtime)
   HelpDisplay.setup(runtime)
@@ -30,7 +33,7 @@ end
 
 -- Hyperkey + T: Open terminal in Finder path
 local function openTerminal()
-  local ok, err = FinderActions.openInTerminal()
+  local ok, err = finderActions.openInTerminal()
   if ok then
     hs.alert.show('Terminal opened')
     log.info('Opened terminal in Finder path')
@@ -42,13 +45,32 @@ end
 
 -- Hyperkey + C: Open VSCode in Finder path
 local function openVSCode()
-  local ok, err = FinderActions.openInEditor()
+  local ok, err = finderActions.openInEditor()
   if not ok then
     hs.alert.show(err or 'Failed to open editor')
     log.warn('Open editor failed', {error = err})
     return
   end
   log.info('Opened VSCode in Finder path')
+end
+
+-- Hyperkey + F: Open Finder at Downloads
+local function openFinderDownloads()
+  local home = os.getenv('HOME')
+  if not home or home == '' then
+    hs.alert.show('HOME not set')
+    log.warn('HOME not set, cannot open Downloads')
+    return
+  end
+
+  local targetPath = home .. '/Downloads'
+  local ok, err = finderActions.openInFinder(targetPath)
+  if not ok then
+    hs.alert.show(err or 'Failed to open Finder')
+    log.warn('Open Finder failed', {error = err, path = targetPath})
+    return
+  end
+  log.info('Opened Finder Downloads', {path = targetPath})
 end
 
 -- Hyperkey + B: Open default browser
@@ -65,12 +87,6 @@ end
 -- Hyperkey + W: Open or switch to WeChat
 local function openWeChat()
   local appPath = ctx.config.apps.wechat
-  if not appPath or appPath == '' then
-    hs.alert.show('WeChat not configured')
-    log.warn('WeChat not configured')
-    return
-  end
-
   local ok, _ = AppLauncher.switchOrLaunch(appPath)
   if not ok then
     hs.alert.show('WeChat not found')
@@ -83,12 +99,6 @@ end
 -- Hyperkey + Q: Open or switch to WeWork
 local function openWeWork()
   local appPath = ctx.config.apps.weworkMac
-  if not appPath or appPath == '' then
-    hs.alert.show('WeWork not configured')
-    log.warn('WeWork not configured')
-    return
-  end
-
   local ok, _ = AppLauncher.switchOrLaunch(appPath)
   if not ok then
     hs.alert.show('WeWork not found')
@@ -129,137 +139,137 @@ end
 function M.start()
   local mods = ctx.config.hotkeys.hyperMods
 
-  -- Hyperkey + L: Lock screen
   ctx.hotkeys.bind({
     id = 'hyperkey.lock',
     group = 'hyperkey',
     mods = mods,
     key = 'L',
-    desc = 'Lock screen',
+    desc = '锁屏',
     action = lockScreen,
   })
 
-  -- Hyperkey + V: Force paste
   ctx.hotkeys.bind({
     id = 'hyperkey.paste',
     group = 'hyperkey',
     mods = mods,
     key = 'V',
-    desc = 'Force paste clipboard text',
+    desc = '强制粘贴',
     action = Clipboard.forcePaste,
   })
 
-  -- Hyperkey + T: Open terminal in Finder path
   ctx.hotkeys.bind({
     id = 'hyperkey.terminal',
     group = 'hyperkey',
     mods = mods,
     key = 'T',
-    desc = 'Open terminal in Finder path',
+    desc = '打开终端（Finder 路径）',
     action = openTerminal,
   })
 
-  -- Hyperkey + C: Open VSCode in Finder path
   ctx.hotkeys.bind({
     id = 'hyperkey.editor',
     group = 'hyperkey',
     mods = mods,
     key = 'C',
-    desc = 'Open VSCode in Finder path',
+    desc = '打开编辑器（Finder 路径）',
     action = openVSCode,
   })
 
-  -- Hyperkey + B: Open browser
+  ctx.hotkeys.bind({
+    id = 'hyperkey.finder',
+    group = 'hyperkey',
+    mods = mods,
+    key = 'F',
+    desc = '打开下载目录',
+    action = openFinderDownloads,
+  })
+
   ctx.hotkeys.bind({
     id = 'hyperkey.browser',
     group = 'hyperkey',
     mods = mods,
     key = 'B',
-    desc = 'Open default browser',
+    desc = '打开浏览器',
     action = openBrowser,
   })
 
-  -- Hyperkey + W: Open WeChat
-  ctx.hotkeys.bind({
-    id = 'hyperkey.wechat',
-    group = 'hyperkey',
-    mods = mods,
-    key = 'W',
-    desc = 'Open WeChat',
-    action = openWeChat,
-  })
+  if AppDiscovery.existsApp(ctx.config.apps.wechat) then
+    ctx.hotkeys.bind({
+      id = 'hyperkey.wechat',
+      group = 'hyperkey',
+      mods = mods,
+      key = 'W',
+      desc = '打开微信',
+      action = openWeChat,
+    })
+  end
 
-  -- Hyperkey + Q: Open WeWork
-  ctx.hotkeys.bind({
-    id = 'hyperkey.weworkMac',
-    group = 'hyperkey',
-    mods = mods,
-    key = 'Q',
-    desc = 'Open WeWork',
-    action = openWeWork,
-  })
+  if AppDiscovery.existsApp(ctx.config.apps.weworkMac) then
+    ctx.hotkeys.bind({
+      id = 'hyperkey.weworkMac',
+      group = 'hyperkey',
+      mods = mods,
+      key = 'Q',
+      desc = '打开企业微信',
+      action = openWeWork,
+    })
+  end
 
-  -- Hyperkey + Left: Window left half
   ctx.hotkeys.bind({
     id = 'hyperkey.window.left',
     group = 'hyperkey',
     mods = mods,
     key = 'left',
-    desc = 'Resize window to left half',
+    desc = '窗口左半屏',
     action = windowLeft,
   })
 
-  -- Hyperkey + Right: Window right half
   ctx.hotkeys.bind({
     id = 'hyperkey.window.right',
     group = 'hyperkey',
     mods = mods,
     key = 'right',
-    desc = 'Resize window to right half',
+    desc = '窗口右半屏',
     action = windowRight,
   })
 
-  -- Hyperkey + Up: Window upper half
   ctx.hotkeys.bind({
     id = 'hyperkey.window.up',
     group = 'hyperkey',
     mods = mods,
     key = 'up',
-    desc = 'Resize window to upper half',
+    desc = '窗口上半屏',
     action = windowUp,
   })
 
-  -- Hyperkey + Down: Window lower half
   ctx.hotkeys.bind({
     id = 'hyperkey.window.down',
     group = 'hyperkey',
     mods = mods,
     key = 'down',
-    desc = 'Resize window to lower half',
+    desc = '窗口下半屏',
     action = windowDown,
   })
 
-  -- Hyperkey + Return: Maximize window
   ctx.hotkeys.bind({
     id = 'hyperkey.window.maximize',
     group = 'hyperkey',
     mods = mods,
     key = 'Return',
-    desc = 'Maximize current window',
+    desc = '窗口最大化',
     action = windowMaximize,
   })
 
-  -- Hyperkey + H: Show help panel
   ctx.hotkeys.bind({
     id = 'hyperkey.help',
     group = 'hyperkey',
     mods = mods,
     key = 'H',
-    desc = 'Show help panel with all hotkeys',
+    desc = '显示帮助面板',
     action = showHelp,
   })
 
-  log.info('Hyperkey controller started with 13 hotkeys bound')
+  log.info('Hyperkey controller started')
   return true
 end
 
@@ -272,6 +282,7 @@ function M.dispose()
   ctx = nil
   log = nil
   windowOps = nil
+  finderActions = nil
 end
 
 return M

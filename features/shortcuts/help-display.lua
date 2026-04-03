@@ -8,26 +8,6 @@ local log = nil
 local hud = nil
 local hudTimer = nil
 
-local HYPERKEY_CN_DESC = {
-  ['hyperkey.lock'] = '锁屏',
-  ['hyperkey.paste'] = '强制粘贴',
-  ['hyperkey.terminal'] = '打开终端',
-  ['hyperkey.editor'] = '打开编辑器',
-  ['hyperkey.browser'] = '打开浏览器',
-  ['hyperkey.wechat'] = '打开微信',
-  ['hyperkey.weworkMac'] = '打开企业微信',
-  ['hyperkey.window.left'] = '窗口左半屏',
-  ['hyperkey.window.right'] = '窗口右半屏',
-  ['hyperkey.window.up'] = '窗口上半屏',
-  ['hyperkey.window.down'] = '窗口下半屏',
-  ['hyperkey.window.maximize'] = '窗口最大化',
-  ['hyperkey.help'] = '显示帮助面板',
-}
-
-local GLOBAL_CN_DESC = {
-  ['global.reload'] = '重新加载配置',
-}
-
 function M.setup(runtime)
   ctx = runtime
   log = ctx.logger.scope('HelpDisplay')
@@ -81,21 +61,18 @@ end
 local function formatHotkey(binding)
   if binding.group == 'hyperkey' then
     local key = keyToString(binding.key)
-    local desc = HYPERKEY_CN_DESC[binding.id] or (binding.desc or binding.id)
-    return 'Hyperkey + ' .. key .. '    ' .. desc
+    return 'Hyperkey + ' .. key .. '    ' .. (binding.desc or binding.id)
   end
 
   if binding.group == 'global' then
     local mods = modsToString(binding.mods)
     local key = keyToString(binding.key)
-    local desc = GLOBAL_CN_DESC[binding.id] or (binding.desc or binding.id)
-    return mods .. ' + ' .. key .. '    ' .. desc
+    return mods .. ' + ' .. key .. '    ' .. (binding.desc or binding.id)
   end
 
   local mods = modsToString(binding.mods)
   local key = keyToString(binding.key)
-  local desc = binding.desc or binding.id
-  return mods .. key .. '    ' .. desc
+  return mods .. key .. '    ' .. (binding.desc or binding.id)
 end
 
 local function groupHotkeys(hotkeys)
@@ -165,7 +142,6 @@ function M.show()
   local lineHeight = 24
   local titleHeight = 40
   local padding = 24
-  local extraSpace = 8
   local h = titleHeight + padding + (#lines * lineHeight) + padding
 
   -- Center on screen

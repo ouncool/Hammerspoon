@@ -14,9 +14,6 @@ config.hotkeys = {
     key = 'R',
   },
   hyperMods = {'cmd', 'alt', 'ctrl', 'shift'},
-  windowMode = {
-    key = 'R',
-  },
 }
 
 config.inputMethod = {
@@ -30,10 +27,6 @@ config.inputMethod = {
     '/Applications/WebStorm.app',
     '/Applications/Raycast.app',
   },
-}
-
-config.window = {
-  twoThirdRatio = 2 / 3,
 }
 
 config.apps = {

@@ -7,7 +7,6 @@ end
 function Operations.new(ctx)
   local log = ctx.logger.scope('WindowOps')
   local events = ctx.events
-  local ratio = ctx.config.window.twoThirdRatio
 
   local screenCache = {}
   local cacheNs = 0
@@ -100,67 +99,12 @@ function Operations.new(ctx)
     end)
   end
 
-  function api.quarterLT()
-    withWindow(function(win, screen)
-      setFrame(win, {x = screen.x, y = screen.y, w = screen.w / 2, h = screen.h / 2})
-    end)
-  end
-
-  function api.quarterLB()
-    withWindow(function(win, screen)
-      setFrame(win, {x = screen.x, y = screen.y + screen.h / 2, w = screen.w / 2, h = screen.h / 2})
-    end)
-  end
-
-  function api.quarterRT()
-    withWindow(function(win, screen)
-      setFrame(win, {x = screen.x + screen.w / 2, y = screen.y, w = screen.w / 2, h = screen.h / 2})
-    end)
-  end
-
-  function api.quarterRB()
-    withWindow(function(win, screen)
-      setFrame(win, {x = screen.x + screen.w / 2, y = screen.y + screen.h / 2, w = screen.w / 2, h = screen.h / 2})
-    end)
-  end
-
-  function api.twoThirdLeft()
-    withWindow(function(win, screen)
-      setFrame(win, {x = screen.x, y = screen.y, w = screen.w * ratio, h = screen.h})
-    end)
-  end
-
-  function api.twoThirdRight()
-    withWindow(function(win, screen)
-      setFrame(win, {x = screen.x + screen.w * (1 - ratio), y = screen.y, w = screen.w * ratio, h = screen.h})
-    end)
-  end
-
   function api.maximize()
     withWindow(function(win)
       win:maximize()
       events.emit(events.NAMES.WINDOW_RESIZED, {action = 'maximize'})
     end)
   end
-
-  function api.close()
-    withWindow(function(win)
-      win:close()
-      events.emit(events.NAMES.WINDOW_DESTROYED, {action = 'close'})
-    end)
-  end
-
-  api.helpMessage = [[
-Window Management
-
-h/l/j/k: left/right/bottom/top half
-y/u/i/o: quarter windows
-H/L: left/right two-thirds
-f: maximize
-c: close window
-Tab: show this help
-q or Esc: exit
-]]
 
   return api
 end

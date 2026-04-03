@@ -215,6 +215,22 @@ local function sanitizeLegacyConfig(userConfig)
     return false
   end)
 
+  drop('config.hotkeys.windowMode', function()
+    if type(sanitized.hotkeys) == 'table' and sanitized.hotkeys.windowMode ~= nil then
+      sanitized.hotkeys.windowMode = nil
+      return true
+    end
+    return false
+  end)
+
+  drop('config.window', function()
+    if sanitized.window ~= nil then
+      sanitized.window = nil
+      return true
+    end
+    return false
+  end)
+
   return sanitized, warnings
 end
 

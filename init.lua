@@ -8,8 +8,6 @@ local Hotkeys = require('infra.hotkey-registry')
 local CommandRunner = require('infra.command-runner')
 
 local InputMethod = require('features.automation.auto-switch')
-local WindowManager = require('features.window.manager')
-local FinderActions = require('features.interaction.finder-actions')
 local PreviewPdf = require('features.interaction.pdf-fullscreen')
 
 local ok, errors = Config.reload()
@@ -35,7 +33,7 @@ Hotkeys.bind({
   group = 'global',
   mods = config.hotkeys.reload.mods,
   key = config.hotkeys.reload.key,
-  desc = 'Reload Hammerspoon config',
+  desc = '重新加载配置',
   action = function()
     hs.reload()
   end,
@@ -54,27 +52,19 @@ Lifecycle.setContext(context)
 Lifecycle.register({
   id = 'feature.inputMethod',
   module = InputMethod,
+  enabled = config.features.inputMethod,
 })
 
 Lifecycle.register({
   id = 'feature.hyperkey',
   module = require('features.shortcuts.controller'),
-  deps = {'feature.finderActions'},
-})
-
-Lifecycle.register({
-  id = 'feature.windowManager',
-  module = WindowManager,
-})
-
-Lifecycle.register({
-  id = 'feature.finderActions',
-  module = FinderActions,
+  enabled = config.features.hyperkey,
 })
 
 Lifecycle.register({
   id = 'feature.previewPdf',
   module = PreviewPdf,
+  enabled = config.features.previewPdf,
 })
 
 

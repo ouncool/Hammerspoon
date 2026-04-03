@@ -20,12 +20,21 @@ No compatibility shims are kept for the previous `modules/*` architecture, excep
 - Validates strictly against schema
 - Rejects unknown keys
 - Exposes immutable config snapshot
+- Sanitizes a small set of legacy keys before validation
 
 Primary APIs:
 
 - `Config.reload() -> ok, errors`
 - `Config.get() -> table`
 - `Config.defaults() -> table`
+
+Config change checklist:
+
+1. Update user-facing sample values in `config.lua`
+2. Update defaults and schema in `core/schema.lua`
+3. Update legacy sanitization in `core/config.lua` if removing or renaming keys
+4. Update runtime consumers under `init.lua` / `features/*`
+5. Update the config matrix in `README.md`
 
 ### `core/events.lua`
 
@@ -109,14 +118,13 @@ Application discovery/open helpers.
 ### Window Management
 
 - `features/window/operations.lua`: geometry actions
-- `features/window/manager.lua`: modal UI and key mapping
 
 ### Finder Integration
 
 `features/interaction/finder-actions.lua`
 
 - Reusable actions only (no direct hotkey binding)
-- Open Finder path in terminal/editor
+- Open Finder path in terminal/editor/Finder
 
 ### Hyper Shortcuts
 
@@ -153,7 +161,10 @@ Application discovery/open helpers.
 - Hotkey collision check (`Hotkeys.list()`)
 - Feature-path manual checks:
   - Hyper shortcuts
-  - Window mode
+  - Window geometry actions
   - Input method switch
   - Finder open actions
   - Preview PDF fullscreen
+- Config drift check:
+  - every key in `config.lua` must exist in `core/schema.lua`
+  - every documented key in `README.md` must have a runtime consumer or be explicitly marked as reserved

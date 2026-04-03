@@ -12,22 +12,13 @@
 - `Hyperkey + V`: 强制粘贴纯文本
 - `Hyperkey + T`: 在 Finder 当前目录打开终端
 - `Hyperkey + C`: 在 Finder 当前目录打开编辑器
+- `Hyperkey + F`: 打开 Finder（Downloads）
 - `Hyperkey + B`: 打开默认浏览器（按候选顺序）
 - `Hyperkey + W`: 打开或切换微信
 - `Hyperkey + Q`: 打开或切换企业微信
 - `Hyperkey + ← / → / ↑ / ↓`: 窗口半屏布局
 - `Hyperkey + Return`: 最大化窗口
 - `Hyperkey + H`: 显示快捷键帮助面板
-- `Hyperkey + R`: 进入窗口模式（modal）
-
-### 窗口模式（进入后）
-- `h/l/j/k`: 左/右/下/上半屏
-- `y/u/i/o`: 四象限布局
-- `Shift+h / Shift+l`: 左/右 2/3 宽
-- `f`: 最大化
-- `c`: 关闭窗口
-- `Tab`: 显示帮助
-- `q` 或 `Esc`: 退出窗口模式
 
 ### 自动化
 - 输入法自动切换（按前台应用切换中英文输入法）
@@ -64,7 +55,6 @@
     │   ├── controller.lua
     │   └── help-display.lua
     └── window/
-        ├── manager.lua
         └── operations.lua
 ```
 
@@ -80,15 +70,11 @@
 ### `hotkeys`
 - `reload`: 重载快捷键
 - `hyperMods`: Hyperkey 修饰键数组
-- `windowMode.key`: 进入窗口模式的按键（与 `hyperMods` 组合）
 
 ### `inputMethod`
 - `default`: 默认输入法 ID
 - `english`: 英文输入法 ID
 - `englishApps`: 强制英文输入的应用列表（路径 / bundleId / 名称可匹配）
-
-### `window`
-- `twoThirdRatio`: 窗口 2/3 布局比例
 
 ### `apps`
 - `browsers`: 浏览器候选路径（按顺序）
@@ -102,6 +88,35 @@
 - `debounceSec`: 防抖时间
 - `fullscreenDelaySec`: 延时全屏时间
 
+## 配置对照表
+
+| 配置项 | 默认值来源 | 运行时消费点 | 文档入口 |
+| --- | --- | --- | --- |
+| `logging.level` | `core/schema.lua` | `core/logger.lua` 的 `Logger.configure()` | 本节 `logging` |
+| `logging.console` | `core/schema.lua` | `core/logger.lua` 的 `Logger.configure()` | 本节 `logging` |
+| `logging.notification` | `core/schema.lua` | `core/logger.lua` 的 `Logger.configure()` | 本节 `logging` |
+| `hotkeys.reload.mods` | `core/schema.lua` | `init.lua` 的全局重载快捷键绑定 | 本节 `hotkeys`，功能概览 |
+| `hotkeys.reload.key` | `core/schema.lua` | `init.lua` 的全局重载快捷键绑定 | 本节 `hotkeys`，功能概览 |
+| `hotkeys.hyperMods` | `core/schema.lua` | `features/shortcuts/controller.lua` 的 Hyperkey 绑定 | 本节 `hotkeys`，功能概览 |
+| `inputMethod.default` | `core/schema.lua` | `features/automation/auto-switch.lua` | 本节 `inputMethod`，自动化 |
+| `inputMethod.english` | `core/schema.lua` | `features/automation/auto-switch.lua` | 本节 `inputMethod`，自动化 |
+| `inputMethod.englishApps` | `core/schema.lua` | `features/automation/auto-switch.lua` 的英文应用匹配表 | 本节 `inputMethod`，自动化 |
+| `apps.browsers` | `core/schema.lua` | `features/shortcuts/controller.lua` -> `AppLauncher.openFirstApp()` | 本节 `apps`，功能概览 |
+| `apps.terminals` | `core/schema.lua` | `features/interaction/finder-actions.lua` 的 `openInTerminal()` | 本节 `apps`，功能概览 |
+| `apps.editors[].app` | `core/schema.lua` | `features/interaction/finder-actions.lua` 的 `openInEditor()` | 本节 `apps`，功能概览 |
+| `apps.editors[].cli` | `core/schema.lua` | `features/interaction/finder-actions.lua` 的 `openInEditor()` | 本节 `apps`，功能概览 |
+| `apps.wechat` | `core/schema.lua` | `features/shortcuts/controller.lua` 的微信快捷键 | 本节 `apps`，功能概览 |
+| `apps.weworkMac` | `core/schema.lua` | `features/shortcuts/controller.lua` 的企业微信快捷键 | 本节 `apps`，功能概览 |
+| `previewPdf.appNames` | `core/schema.lua` | `features/interaction/pdf-fullscreen.lua` 的窗口过滤与应用识别 | 本节 `previewPdf`，自动化 |
+| `previewPdf.bundleId` | `core/schema.lua` | `features/interaction/pdf-fullscreen.lua` 的 Preview 识别 | 本节 `previewPdf`，自动化 |
+| `previewPdf.debounceSec` | `core/schema.lua` | `features/interaction/pdf-fullscreen.lua` 的 `Timing.debounce()` | 本节 `previewPdf`，自动化 |
+| `previewPdf.fullscreenDelaySec` | `core/schema.lua` | `features/interaction/pdf-fullscreen.lua` 的延时全屏 | 本节 `previewPdf`，自动化 |
+
+维护规则：
+- 新增配置项时，同时更新 `config.lua`、`core/schema.lua`、本表，以及对应功能描述。
+- 删除配置项时，同时更新 `core/config.lua` 的 legacy 清理逻辑，或明确说明不再兼容。
+- 如果某个配置项只存在于默认值、却没有运行时消费点，视为待清理信号。
+
 ## 兼容迁移说明
 
 为避免旧配置导致严格校验失败，启动时会自动移除并告警以下已废弃字段：
@@ -109,6 +124,8 @@
 - `config.hotkeys.appSwitcher`
 - `config.hotkeys.hyper`
 - `config.hotkeys.pasteHelper`
+- `config.hotkeys.windowMode`
+- `config.window`
 
 日志示例：`Legacy config key removed: config.hotkeys.appSwitcher`
 
@@ -120,7 +137,7 @@
    - 启动失败会看到 `Startup aborted due to module failure`
 3. 常用日志前缀：
    - `HyperkeyController`
-   - `WindowManager`
+   - `WindowOps`
    - `InputMethod`
    - `PreviewPdf`
    - `FinderActions`
